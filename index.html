@@ -1,0 +1,129 @@
+// ════════════════════════════════════════════════════════════
+// owners.js — Data Owners y Data Stewards UPS
+// 66 registros · 3 sedes · 49 completos · 17 pendientes
+// ════════════════════════════════════════════════════════════
+
+var O_PAGE = 1;
+
+function renderOwners() {
+  var pg = document.getElementById('page-owners');
+  pg.innerHTML = `
+    <div class="ph">
+      <div class="ph-row">
+        <div>
+          <div class="ph-title">Data Owners y Data Stewards</div>
+          <div class="ph-sub">66 registros · 3 sedes · 49 completos · 17 pendientes de designación de Steward</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mg" style="grid-template-columns:repeat(auto-fit,minmax(100px,1fr));">
+      <div class="mc"><div class="mc-label">Total</div><div class="mc-val" style="color:var(--cp)">66</div><div class="mc-sub">Data Owners</div></div>
+      <div class="mc"><div class="mc-label">Completos</div><div class="mc-val" style="color:var(--ct)">49</div><div class="mc-sub">con Steward</div></div>
+      <div class="mc"><div class="mc-label">Pendientes</div><div class="mc-val" style="color:var(--ca)">17</div><div class="mc-sub">sin Steward</div></div>
+      <div class="mc"><div class="mc-label">Cuenca</div><div class="mc-val" style="color:var(--cp)">${OWNERS.filter(o=>o.ciudad==='Cuenca').length}</div><div class="mc-sub">registros</div></div>
+      <div class="mc"><div class="mc-label">Quito</div><div class="mc-val" style="color:var(--cb)">${OWNERS.filter(o=>o.ciudad==='Quito').length}</div><div class="mc-sub">registros</div></div>
+      <div class="mc"><div class="mc-label">Guayaquil</div><div class="mc-val" style="color:var(--ca)">${OWNERS.filter(o=>o.ciudad==='Guayaquil').length}</div><div class="mc-sub">registros</div></div>
+    </div>
+
+    <div class="filters">
+      <input type="text" id="os" placeholder="Buscar nombre, cargo o correo..." oninput="drawO()">
+      <select id="osed" onchange="drawO()">
+        <option value="">Todas las sedes</option>
+        <option>Cuenca</option><option>Quito</option><option>Guayaquil</option>
+      </select>
+      <select id="oest" onchange="drawO()">
+        <option value="">Todos los estados</option>
+        <option>Completo</option><option>Pendiente</option>
+      </select>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th style="width:4%">N°</th>
+        <th style="width:26%">Data Owner</th>
+        <th style="width:9%">Sede</th>
+        <th style="width:26%">Data Steward</th>
+        <th style="width:19%">Correo Owner</th>
+        <th style="width:8%">Estado</th>
+        <th style="width:8%">Acción</th>
+      </tr></thead>
+      <tbody id="o-tb"></tbody>
+    </table></div>
+    <div class="pager">
+      <button onclick="opg_(-1)">‹</button>
+      <span id="opi"></span>
+      <button onclick="opg_(1)">›</button>
+    </div>
+  `;
+  drawO();
+}
+
+function ofilt() {
+  var q  = document.getElementById('os')   ? document.getElementById('os').value.toLowerCase()   : '';
+  var fs = document.getElementById('osed') ? document.getElementById('osed').value : '';
+  var fe = document.getElementById('oest') ? document.getElementById('oest').value : '';
+  return OWNERS.filter(function(d) {
+    return (!q  || d.owner.toLowerCase().includes(q) || d.cargo.toLowerCase().includes(q) || d.email.toLowerCase().includes(q))
+        && (!fs || d.ciudad === fs)
+        && (!fe || d.estado === fe);
+  });
+}
+
+function drawO() { O_PAGE = 1; _drawO(); }
+function _drawO() {
+  var rows = ofilt(), tot = rows.length, pgs = Math.ceil(rows.length / STATE.PS) || 1;
+  var sl = rows.slice((O_PAGE - 1) * STATE.PS, O_PAGE * STATE.PS);
+  var h = '';
+  if (!sl.length) {
+    h = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">Sin resultados</td></tr>';
+  } else {
+    sl.forEach(function(d) {
+      var ab = d.ciudad === 'Cuenca' ? 'bd-p' : d.ciudad === 'Quito' ? 'bd-t' : 'bd-a';
+      var av = d.owner.split(' ').slice(0, 2).map(function(w) { return w[0] || ''; }).join('');
+      var avbg = d.ciudad === 'Cuenca' ? 'var(--cpl)' : d.ciudad === 'Quito' ? 'var(--ctl)' : 'var(--cal)';
+      var avtc = d.ciudad === 'Cuenca' ? 'var(--cpd)' : d.ciudad === 'Quito' ? 'var(--ctd)' : 'var(--ca)';
+      var stHtml = d.steward === '—'
+        ? '<span style="color:var(--text3);font-style:italic;">Sin designar</span>'
+        : '<span style="font-size:12px;font-weight:500;">' + d.steward + '</span>'
+          + (d.cargo_s ? '<br><span style="font-size:10px;color:var(--text3);">' + d.cargo_s + '</span>' : '')
+          + (d.email_s ? '<br><a href="mailto:' + d.email_s + '" style="font-size:10px;color:var(--cb);text-decoration:none;">' + d.email_s + '</a>' : '');
+      var accion = d.estado === 'Pendiente'
+        ? '<button class="btn btn-sm" style="font-size:10px;" onclick="genOficio(' + d.n + ')">Oficio ↗</button>'
+        : '<span style="font-size:10px;color:var(--ct);">✓ Completo</span>';
+      h += '<tr>'
+        + '<td style="text-align:center;color:var(--text3);font-size:11px;">' + d.n + '</td>'
+        + '<td><div style="display:flex;align-items:center;gap:8px;">'
+        + '<div style="width:28px;height:28px;border-radius:50%;background:' + avbg + ';color:' + avtc + ';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">' + av + '</div>'
+        + '<div><div style="font-weight:500;font-size:12px;">' + d.owner + '</div>'
+        + '<div style="font-size:10px;color:var(--text3);">' + d.cargo + '</div>'
+        + '<a href="mailto:' + d.email + '" style="font-size:10px;color:var(--cb);text-decoration:none;">' + d.email + '</a>'
+        + '</div></div></td>'
+        + '<td><span class="badge ' + ab + '">' + d.ciudad + '</span></td>'
+        + '<td>' + stHtml + '</td>'
+        + '<td style="font-size:11px;"><a href="mailto:' + d.email + '" style="color:var(--cb);text-decoration:none;">' + d.email + '</a></td>'
+        + '<td><span class="badge ' + (d.estado === 'Completo' ? 'bd-t' : 'bd-r') + '">' + d.estado + '</span></td>'
+        + '<td>' + accion + '</td>'
+        + '</tr>';
+    });
+  }
+  document.getElementById('o-tb').innerHTML = h;
+  document.getElementById('opi').textContent = 'Pág.' + O_PAGE + '/' + pgs + ' (' + tot + ')';
+}
+function opg_(d) {
+  var rows = ofilt(), pgs = Math.ceil(rows.length / STATE.PS) || 1;
+  O_PAGE = Math.max(1, Math.min(pgs, O_PAGE + d));
+  _drawO();
+}
+
+function genOficio(n) {
+  var owner = OWNERS.find(function(o) { return o.n === n; });
+  if (!owner) return;
+  alert(
+    'Función: Generar oficio de designación de Steward\n\n'
+    + 'Data Owner: ' + owner.owner + '\n'
+    + 'Cargo: ' + owner.cargo + '\n'
+    + 'Sede: ' + owner.ciudad + '\n\n'
+    + 'Integrar con backend o Claude Code para generar el documento Word (serie PDP-DOC).\n'
+    + 'Gestora PDP: Valeria Ordóñez · vordonezs@ups.edu.ec'
+  );
+}
