@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGDP-UPS — Sistema de Gestión de Datos Personales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cp: #534AB7; --cpl: #EEEDFE; --cpd: #3C3489; --cpm: #AFA9EC;
+    --ct: #0F6E56; --ctl: #E1F5EE; --ctd: #085041;
+    --ca: #BA7517; --cal: #FAEEDA;
+    --cr: #A32D2D; --crl: #FCEBEB;
+    --cb: #185FA5; --cbl: #E6F1FB;
+    --cg: #F1EFE8; --cgd: #5F5E5A;
+    --bg: #F7F6F3;
+    --surface: #FFFFFF;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.14);
+    --text: #1A1917;
+    --text2: #5F5E5A;
+    --text3: #9A9894;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+  
+  /* ── LAYOUT ── */
+  #app { display: flex; height: 100vh; overflow: hidden; }
+  
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: 220px; flex-shrink: 0; background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0;
+  }
+  .sb-header {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sb-logo {
+    display: flex; align-items: center; gap: 9px; margin-bottom: 4px;
+  }
+  .sb-logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--cp); display: flex; align-items: center;
+    justify-content: center;
+  }
+  .sb-logo-icon svg { width: 18px; height: 18px; fill: #fff; }
+  .sb-logo-name { font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: -.3px; }
+  .sb-logo-sub { font-size: 11px; color: var(--text3); }
+  .sb-institution { font-size: 10px; color: var(--text3); margin-top: 6px; }
+  
+  .sb-nav { flex: 1; overflow-y: auto; padding: 10px 10px; }
+  .sb-section { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; padding: 10px 8px 4px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 10px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; color: var(--text2); transition: all .15s;
+    margin-bottom: 1px; position: relative;
+  }
+  .sb-item:hover { background: var(--bg); color: var(--text); }
+  .sb-item.active { background: var(--cpl); color: var(--cpd); font-weight: 500; }
+  .sb-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .sb-badge {
+    margin-left: auto; font-size: 10px; font-weight: 600;
+    background: var(--cr); color: #fff; border-radius: 10px;
+    padding: 1px 6px; min-width: 18px; text-align: center;
+  }
+  .sb-badge.amber { background: var(--ca); }
+  .sb-badge.green { background: var(--ct); }
+  
+  .sb-footer {
+    padding: 12px 18px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 9px;
+  }
+  .sb-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--cpl); display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 600; color: var(--cpd);
+    flex-shrink: 0;
+  }
+  .sb-user-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .sb-user-role { font-size: 10px; color: var(--text3); }
+  
+  /* ── MAIN ── */
+  #main { flex: 1; overflow-y: auto; }
+  .page { display: none; padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+  .page.active { display: block; }
+  
+  /* ── PAGE HEADER ── */
+  .ph { margin-bottom: 24px; }
+  .ph-title { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -.4px; }
+  .ph-sub { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .ph-row { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  
+  /* ── METRIC GRID ── */
+  .mg { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .mc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
+  .mc-label { font-size: 11px; color: var(--text3); margin-bottom: 5px; font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
+  .mc-val { font-size: 26px; font-weight: 600; letter-spacing: -.5px; }
+  .mc-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  
+  /* ── CARD ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .card-title { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+  
+  /* ── ALERTS ── */
+  .alert { padding: 10px 14px; border-left: 3px solid; border-radius: 0 8px 8px 0; font-size: 12px; margin-bottom: 10px; }
+  .al-r { border-color: #E24B4A; background: var(--crl); color: var(--cr); }
+  .al-a { border-color: var(--ca); background: var(--cal); color: var(--ca); }
+  .al-t { border-color: var(--ct); background: var(--ctl); color: var(--ct); }
+  .al-b { border-color: var(--cb); background: var(--cbl); color: var(--cb); }
+  
+  /* ── TABLE ── */
+  .tbl-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  thead tr { background: var(--bg); }
+  th { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { font-size: 12px; color: var(--text); padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr.row-click:hover td { background: var(--bg); cursor: pointer; }
+  
+  /* ── FILTERS ── */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filters input, .filters select { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 7px 11px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); outline: none; transition: border-color .15s; }
+  .filters input:focus, .filters select:focus { border-color: var(--cp); }
+  .filters input { flex: 1; min-width: 160px; }
+  
+  /* ── BUTTONS ── */
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; transition: all .15s; }
+  .btn:hover { background: var(--bg); }
+  .btn-primary { background: var(--cp); color: #fff; border-color: var(--cp); }
+  .btn-primary:hover { background: var(--cpd); border-color: var(--cpd); }
+  .btn-success { background: var(--ct); color: #fff; border-color: var(--ct); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+  .btn-icon { padding: 7px; display: inline-flex; align-items: center; justify-content: center; }
+  .btn-icon svg { width: 14px; height: 14px; }
+  
+  /* ── BADGES / PILLS ── */
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+  .bd-p { background: var(--cpl); color: var(--cpd); }
+  .bd-t { background: var(--ctl); color: var(--ctd); }
+  .bd-a { background: var(--cal); color: var(--ca); }
+  .bd-r { background: var(--crl); color: var(--cr); }
+  .bd-b { background: var(--cbl); color: var(--cb); }
+  .bd-g { background: var(--cg); color: var(--cgd); }
+  
+  /* ── FORM GRID ── */
+  .fgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; }
+  .field input, .field select, .field textarea {
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    padding: 8px 11px; border: 1px solid var(--border-strong);
+    border-radius: 8px; background: var(--surface); color: var(--text);
+    outline: none; transition: border-color .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--cp); }
+  .field textarea { height: 72px; resize: vertical; }
+  .field-hint { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  
+  /* ── PROGRESS BAR ── */
+  .pbar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .pbar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+  
+  /* ── PAGER ── */
+  .pager { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); margin-top: 8px; }
+  .pager button { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border-strong); border-radius: 7px; background: var(--surface); cursor: pointer; color: var(--text); }
+  .pager button:hover { background: var(--bg); }
+  
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 2px; margin-bottom: 16px; background: var(--bg); border-radius: 10px; padding: 3px; border: 1px solid var(--border); display: inline-flex; }
+  .tab { font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 8px; cursor: pointer; color: var(--text2); transition: all .15s; }
+  .tab.active { background: var(--surface); color: var(--cp); font-weight: 600; box-shadow: var(--shadow); }
+  
+  /* ── COVERAGE GRID ── */
+  .cov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+  .cov-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+  .cov-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .cov-stats { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 5px; }
+  
+  /* ── SOA CONTROL CARD ── */
+  .ctrl-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 6px; box-shadow: var(--shadow); transition: border-color .15s; }
+  .ctrl-card:hover { border-color: var(--cpm); }
+  .ctrl-id { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: var(--cpd); background: var(--cpl); padding: 2px 7px; border-radius: 5px; display: inline-block; margin-bottom: 5px; }
+  .ctrl-id.new { color: var(--ca); background: var(--cal); }
+  .ctrl-desc { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .ctrl-just { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+  .ctrl-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  
+  /* ── RISK CALC ── */
+  .dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .risk-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .risk-panel-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 12px; }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .slider-row label { font-size: 11px; color: var(--text2); min-width: 75px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--cp); }
+  .slider-val { font-size: 13px; font-weight: 600; min-width: 16px; text-align: right; }
+  .risk-result { padding: 10px 14px; border-radius: var(--radius); margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+  .risk-score { font-size: 30px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+  .risk-label { font-size: 14px; font-weight: 600; }
+  .risk-desc { font-size: 11px; opacity: .8; margin-top: 2px; }
+  
+  /* ── HEATMAP ── */
+  .heatmap { display: grid; grid-template-columns: 80px repeat(5, 1fr); gap: 3px; }
+  .hcell { height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 11px; font-weight: 600; color: #fff; }
+  .hcell.head { background: var(--cpd); font-size: 10px; border-radius: 6px; }
+  
+  /* ── STEPPER ── */
+  .stepper { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
+  .step-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .step-done { background: var(--ct); color: #fff; }
+  .step-active { background: var(--cp); color: #fff; }
+  .step-todo { background: var(--border); color: var(--text3); }
+  .step-label { font-size: 11px; color: var(--text2); }
+  .step-label.active { color: var(--cp); font-weight: 600; }
+  .step-sep { flex: 1; height: 1px; background: var(--border); max-width: 30px; }
+  
+  /* ── MONO ── */
+  .mono { font-family: 'DM Mono', monospace; }
+  
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    #sidebar { display: none; }
+    .page { padding: 16px; }
+    .dual-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════════════════════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════════════ -->
+<div id="sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>
+        <div class="sb-logo-name">SGDP·UPS</div>
+      </div>
+    </div>
+    <div class="sb-institution">Sistema de Gestión de Datos Personales<br>Procuraduría · 2026</div>
+  </div>
+
+  <div class="sb-nav">
+    <div class="sb-section">Principal</div>
+    <div class="sb-item active" onclick="nav('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+
+    <div class="sb-section">Cumplimiento</div>
+    <div class="sb-item" onclick="nav('rat')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      RAT
+      <span class="sb-badge amber" id="sb-rat">0</span>
+    </div>
+    <div class="sb-item" onclick="nav('eipd')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      EIPD / Riesgos
+      <span class="sb-badge" id="sb-eipd">12</span>
+    </div>
+    <div class="sb-item" onclick="nav('soa')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      SOA ISO 27701
+    </div>
+
+    <div class="sb-section">Gobernanza</div>
+    <div class="sb-item" onclick="nav('owners')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Data Owners
+      <span class="sb-badge amber">17</span>
+    </div>
+    <div class="sb-item" onclick="nav('procedimientos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Procedimientos
+      <span class="sb-badge green">226</span>
+    </div>
+  </div>
+
+  <div class="sb-footer">
+    <div class="sb-avatar">VO</div>
+    <div>
+      <div class="sb-user-name">Valeria Ordóñez</div>
+      <div class="sb-user-role">Gestora PDP · Procuraduría</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════════════════ -->
+<div id="main">
+
+<!-- ── DASHBOARD ─────────────────────────────────────────── -->
+<div class="page active" id="page-dashboard">
+  <div class="ph">
+    <div class="ph-row">
+      <div>
+        <div class="ph-title">Sistema de Gestión de Datos Personales</div>
+        <div class="ph-sub">Universidad Politécnica Salesiana · Art. 38 RLOPDP · ISO/IEC 27701:2025 · Guía SPDP Edición 2 (2026)</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="nav('rat')">+ Nuevo RAT</button>
+        <button class="btn" onclick="nav('eipd')">+ Nueva EIPD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mg">
+    <div class="mc"><div class="mc-label">Procedimientos</div><div class="mc-val" style="color:var(--text)">438</div><div class="mc-sub">total UPS</div></div>
+    <div class="mc"><div class="mc-label">Fase 9 (base RAT)</div><div class="mc-val" style="color:var(--ct)">226</div><div class="mc-sub">aprobados</div></div>
+    <div class="mc"><div class="mc-label">RAT registrados</div><div class="mc-val" id="dm-rat" style="color:var(--cp)">0</div><div class="mc-sub">de 226</div></div>
+    <div class="mc"><div class="mc-label">Data Owners</div><div class="mc-val" style="color:var(--cp)">66</div><div class="mc-sub">designados</div></div>
+    <div class="mc"><div class="mc-label">Stewards pendientes</div><div class="mc-val" style="color:var(--ca)">17</div><div class="mc-sub">sin designar</div></div>
+    <div class="mc"><div class="mc-label">Riesgos críticos</div><div class="mc-val" id="dm-crit" style="color:var(--cr)">2</div><div class="mc-sub">acción inmediata</div></div>
+    <div class="mc"><div class="mc-label">SOA cumplimiento</div><div class="mc-val" style="color:var(--ca)">38%</div><div class="mc-sub">impl. o en prog.</div></div>
+    <div class="mc"><div class="mc-label">EIPDs activas</div><div class="mc-val" id="dm-eipd-cnt" style="color:var(--ca)">0</div><div class="mc-sub">iniciadas</div></div>
+  </div>
+
+  <div class="alert al-r">2 riesgos CRÍTICOS activos (SIGA sin cifrado · ATENEA/IA) — tratamiento inmediato requerido</div>
+  <div class="alert al-a">17 Data Stewards pendientes de designación · Guía SPDP V2 #35: umbral apetito bajó a USD 12.000</div>
+  <div class="alert al-b">SOA ISO 27701:2025 — 22 controles CRÍTICOS sin implementar · Próximo hito: 30-Jun-2026</div>
+
+  <div class="card">
+    <div class="card-title">Cobertura RAT por macroproceso</div>
+    <div class="cov-grid" id="dash-cov"></div>
+  </div>
+</div>
+
+<!-- ── RAT ────────────────────────────────────────────────── -->
+<div class="page" id="page-rat">
+  <div class="ph">
+    <div class="ph-row">
+      <div>
+        <div class="ph-title">Registro de Actividades de Tratamiento</div>
+        <div class="ph-sub">Art. 38 RLOPDP · Formulario RAT-PROCEDIMIENTO UPS</div>
+      </div>
+      <button class="btn" onclick="nav('dashboard')">← Volver</button>
+    </div>
+  </div>
+
+  <div id="rat-picker">
+    <div class="card">
+      <div class="card-title">Seleccionar procedimiento</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" id="rm-proc" onclick="setRM('proc')">Procedimiento aprobado</button>
+        <button class="btn btn-sm" id="rm-libre" onclick="setRM('libre')">Actividad libre</button>
+      </div>
+      <div class="filters">
+        <input type="text" id="rps" placeholder="Buscar procedimiento o código...">
+        <select id="rpm"><option value="">Todos los macroprocesos</option></select>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr>
+          <th style="width:44%">Procedimiento</th>
+          <th style="width:18%">Código</th>
+          <th style="width:24%">Data Owner</th>
+          <th style="width:14%"></th>
+        </tr></thead>
+        <tbody id="rp-tb"></tbody>
+      </table></div>
+      <div class="pager"><button onclick="rppg(-1)">‹</button><span id="rppi"></span><button onclick="rppg(1)">›</button></div>
+    </div>
+  </div>
+
+  <div id="rat-form" style="display:none;">
+    <div id="rat-al" class="alert al-t" style="display:none;"></div>
+    <div class="stepper" id="rat-stepper"></div>
+
+    <div class="card">
+      <div class="card-title">Sección 1 — Identificación del procedimiento</div>
+      <div class="fgrid">
+        <div class="field"><label>Código *</label><input type="text" id="rf-cod" class="mono"></div>
+        <div class="field"><label>Nombre del procedimiento *</label><input type="text" id="rf-nom"></div>
+        <div class="field"><label>Macroproceso</label><input type="text" id="rf-mac"></div>
+        <div class="field"><label>Data Owner</label><input type="text" id="rf-own"></div>
+        <div class="field"><label>Sede *</label>
+          <select id="rf-sede"><option value="">—</option><option>Cuenca</option><option>Quito</option><option>Guayaquil</option><option>Todas</option></select>
+        </div>
+        <div class="field"><label>Nombre actividad de tratamiento *</label><input type="text" id="rf-act" placeholder="Ej: Registro de aspirantes"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Sección 2 — Datos y base jurídica</div>
+      <div class="fgrid">
+        <div class="field">
+          <label>Base jurídica — Art. 7 LOPDP *</label>
+          <select id="rf-base" onchange="chkBase()">
+            <option value="">Seleccionar...</option>
+            <option>Consentimiento del titular</option>
+            <option>Obligación legal</option>
+            <option>Cumplimiento contractual</option>
+            <option>Interés público</option>
+            <option>Interés vital</option>
+            <option>Interés legítimo</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>¿Datos sensibles? Art. 25</label>
+          <select id="rf-sens" onchange="chkSens()">
+            <option value="">—</option><option value="no">No</option><option value="si">Sí</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nivel de riesgo</label>
+          <select id="rf-riesgo">
+            <option value="">—</option>
+            <option value="bajo">Bajo</option>
+            <option value="medio">Medio</option>
+            <option value="alto">Alto (requiere EIPD)</option>
+          </select>
+        </div>
+        <div class="field"><label>Plazo de conservación</label><input type="text" id="rf-plazo" placeholder="Ej: vigencia + 7 años"></div>
+        <div class="field"><label>Normativa que sustenta</label><input type="text" id="rf-norma" placeholder="Ej: LOES Art. 71 · LOPDP Art. 7 lit. b"></div>
+        <div class="field"><label>Canal ARCO+</label><input type="text" id="rf-arco" value="dpd@ups.edu.ec · vordonezs@ups.edu.ec"></div>
+      </div>
+      <div id="rat-al-sens" class="alert al-r" style="display:none;margin-top:10px;">Datos sensibles — base legitimadora reforzada requerida (Art. 9 LOPDP)</div>
+      <div id="rat-al-il" class="alert al-a" style="display:none;margin-top:10px;">Interés legítimo — debes documentar el test de ponderación (Res. SPDP-SPD-2025-0041-R)</div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-success" onclick="saveRAT()">Guardar RAT</button>
+      <button class="btn btn-primary" onclick="launchEIPD()">Iniciar EIPD para este tratamiento →</button>
+      <button class="btn" onclick="resetRAT()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EIPD / RIESGOS ─────────────────────────────────────── -->
+<div class="page" id="page-eipd">
+  <div class="ph">
+    <div class="ph-row">
+      <div>
+        <div class="ph-title">EIPD / Análisis de Riesgos</div>
+        <div class="ph-sub">ISO/IEC 27701:2025 · Cláusulas 6.1.2 y 6.1.3 · Guía SPDP V2 · R=(P)×(I×V) para titulares vulnerables</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="et0" onclick="setET(0)">Calculadora</div>
+    <div class="tab" id="et1" onclick="setET(1)">Riesgos registrados</div>
+    <div class="tab" id="et2" onclick="setET(2)">Mapa de calor</div>
+  </div>
+
+  <div id="ev0">
+    <div class="alert al-a" style="margin-bottom:14px;"><strong>Guía SPDP V2 2026:</strong> Umbral apetito ↓ USD 12.000 (antes 60.000) · Frecuencia máx. ↓ 6 eventos/año (antes 11) · Vulnerables: R=(P)×(I×V)</div>
+    <div class="card">
+      <div class="card-title">Identificación del riesgo — Cláusula 6.1.2.c</div>
+      <div class="fgrid">
+        <div class="field"><label>Activo / Tratamiento *</label><input type="text" id="er-activo" placeholder="Ej: SIGA — Base de datos académica"></div>
+        <div class="field"><label>Vulnerabilidad</label><input type="text" id="er-vuln" placeholder="¿Qué debilidad lo permite?"></div>
+        <div class="field"><label>Amenaza</label><input type="text" id="er-amenaza" placeholder="¿Qué puede salir mal?"></div>
+        <div class="field">
+          <label>¿Titulares vulnerables? (factor V) — V2</label>
+          <select id="er-vf" onchange="calcR()">
+            <option value="1">No — R = P × I</option>
+            <option value="2.5">Menores de edad (V=2.5)</option>
+            <option value="2.2">Enf. crónicas (V=2.2)</option>
+            <option value="2.0">Discapacidad (V=2.0)</option>
+            <option value="1.8">Pobreza extrema (V=1.8)</option>
+            <option value="1.7">Mujeres embarazadas (V=1.7)</option>
+            <option value="1.6">Comunidades indígenas (V=1.6)</option>
+            <option value="1.5">Adultos mayores (V=1.5)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="dual-grid">
+      <div class="risk-panel">
+        <div class="risk-panel-title" style="color:var(--cp);">Perspectiva organización</div>
+        <div class="slider-row"><label>Consecuencia</label><input type="range" min="1" max="5" value="3" id="eo-i" oninput="calcR();updS('eo-i','eo-iv')" step="1"><span class="slider-val" id="eo-iv">3</span></div>
+        <div class="slider-row"><label>Probabilidad</label><input type="range" min="1" max="5" value="3" id="eo-p" oninput="calcR();updS('eo-p','eo-pv')" step="1"><span class="slider-val" id="eo-pv">3</span></div>
+        <div class="risk-result" id="eo-box">
+          <div class="risk-score" id="eo-sc">9</div>
+          <div><div class="risk-label" id="eo-nl">BAJO</div><div class="risk-desc">Seguimiento semestral</div></div>
+        </div>
+      </div>
+      <div class="risk-panel">
+        <div class="risk-panel-title" style="color:var(--ct);">Perspectiva titular</div>
+        <div class="slider-row"><label>Consecuencia</label><input type="range" min="1" max="5" value="3" id="et-i" oninput="calcR();updS('et-i','et-iv')" step="1"><span class="slider-val" id="et-iv">3</span></div>
+        <div class="slider-row"><label>Probabilidad</label><input type="range" min="1" max="5" value="3" id="et-p" oninput="calcR();updS('et-p','et-pv')" step="1"><span class="slider-val" id="et-pv">3</span></div>
+        <div class="risk-result" id="et-box">
+          <div class="risk-score" id="et-sc">9</div>
+          <div><div class="risk-label" id="et-nl">BAJO</div><div class="risk-desc">Seguimiento semestral</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="risk-result" id="res-box" style="border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:14px;">
+      <div class="risk-score" id="res-sc" style="font-size:48px;">9</div>
+      <div>
+        <div style="font-size:11px;opacity:.7;margin-bottom:3px;">Nivel de riesgo máximo — Cláusula 6.1.2.e</div>
+        <div class="risk-label" id="res-nl" style="font-size:20px;">BAJO</div>
+        <div class="risk-desc" id="res-desc">Aceptable · Seguimiento semestral · Umbral V2: USD 12.000</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="saveRisk()">Guardar riesgo</button>
+      <button class="btn" onclick="alert('Función de generación de informe — integrar con backend')">Generar informe EIPD</button>
+    </div>
+  </div>
+
+  <div id="ev1" style="display:none;">
+    <div id="risks-list"></div>
+    <div class="alert al-b" id="ev1-empty">Sin riesgos registrados. Usa la calculadora para agregar el primero.</div>
+  </div>
+
+  <div id="ev2" style="display:none;">
+    <div class="card">
+      <div class="card-title">Mapa de calor — Probabilidad × Impacto · Guía SPDP V2 2026</div>
+      <div class="heatmap" id="heatmap" style="margin-bottom:14px;"></div>
+      <div class="alert al-a">V2 #35-36: Umbral USD 12.000 (antes 60.000) · Máx. 6 eventos/año (antes 11) · Factor V para vulnerables</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SOA ISO 27701 ───────────────────────────────────────── -->
+<div class="page" id="page-soa">
+  <div class="ph">
+    <div class="ph-row">
+      <div>
+        <div class="ph-title">Declaración de Aplicabilidad — SOA</div>
+        <div class="ph-sub">ISO/IEC 27701:2025 · Cláusulas 6.1.3.d y 6.1.3.e · PII Controller · Guía SPDP V2</div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+        <span class="badge bd-t">4 impl.</span>
+        <span class="badge bd-a">27 parciales</span>
+        <span class="badge bd-b">19 en prog.</span>
+        <span class="badge bd-r">23 no impl.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:12px 16px;">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px;"><span>Cumplimiento general ISO 27701:2025</span><span>38%</span></div>
+    <div class="pbar"><div class="pbar-fill" style="width:38%;background:var(--ca);"></div></div>
+  </div>
+
+  <div class="filters">
+    <input type="text" id="soa-s" placeholder="Buscar control..." oninput="drawSOA()">
+    <select id="soa-e" onchange="drawSOA()"><option value="">Todos los estados</option><option>Implementado</option><option>Parcialmente implementado</option><option>En implementación</option><option>No implementado</option></select>
+    <select id="soa-p" onchange="drawSOA()"><option value="">Todas las prioridades</option><option>CRÍTICA</option><option>ALTA</option><option>MEDIA</option><option>BAJA</option></select>
+  </div>
+  <div id="soa-list"></div>
+  <div class="pager"><button onclick="soaPg(-1)">‹</button><span id="soa-pi"></span><button onclick="soaPg(1)">›</button></div>
+</div>
+
+<!-- ── DATA OWNERS ─────────────────────────────────────────── -->
+<div class="page" id="page-owners">
+  <div class="ph">
+    <div class="ph-row">
+      <div>
+        <div class="ph-title">Data Owners y Data Stewards</div>
+        <div class="ph-sub">66 registros · 3 sedes · 49 completos · 17 pendientes de designación de Steward</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <input type="text" id="os" placeholder="Buscar nombre, cargo o correo..." oninput="drawO()">
+    <select id="osed" onchange="drawO()"><option value="">Todas las sedes</option><option>Cuenca</option><option>Quito</option><option>Guayaquil</option></select>
+    <select id="oest" onchange="drawO()"><option value="">Todos los estados</option><option>Completo</option><option>Pendiente</option></select>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th style="width:5%">N°</th>
+      <th style="width:26%">Data Owner</th>
+      <th style="width:9%">Sede</th>
+      <th style="width:25%">Data Steward</th>
+      <th style="width:19%">Correo Owner</th>
+      <th style="width:9%">Estado</th>
+      <th style="width:7%"></th>
+    </tr></thead>
+    <tbody id="o-tb"></tbody>
+  </table></div>
+  <div class="pager"><button onclick="opg(-1)">‹</button><span id="opi"></span><button onclick="opg(1)">›</button></div>
+</div>
+
+<!-- ── PROCEDIMIENTOS ──────────────────────────────────────── -->
+<div class="page" id="page-procedimientos">
+  <div class="ph">
+    <div class="ph-row">
+      <div>
+        <div class="ph-title">Procedimientos Fase 9 — Base RAT</div>
+        <div class="ph-sub">226 procedimientos aprobados y distribuidos · Listado Ene2026</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <input type="text" id="ps" placeholder="Buscar procedimiento o código..." oninput="drawP()">
+    <select id="pm" onchange="drawP()"><option value="">Todos los macroprocesos</option></select>
+    <select id="pc" onchange="drawP()"><option value="">Todas las categorías</option><option>Estratégicos</option><option>Apoyo y Soporte</option><option>Clave - Misional</option><option>Servicio Comunitario</option></select>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th style="width:44%">Procedimiento</th>
+      <th style="width:17%">Código</th>
+      <th style="width:21%">Data Owner</th>
+      <th style="width:10%">Categoría</th>
+      <th style="width:8%"></th>
+    </tr></thead>
+    <tbody id="p-tb"></tbody>
+  </table></div>
+  <div class="pager"><button onclick="ppg(-1)">‹</button><span id="ppi"></span><button onclick="ppg(1)">›</button></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════════════════
+var PROCS=[
+  {cod:'PI-GPE-SEC-0002',nom:'Definición de plan de mejoras, plan de acción o similares',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'PI-GPE-SEC-0003',nom:'Elaboración del Plan Operativo Anual (POA)',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'PI-GPE-SEC-0004',nom:'Elaboración del Plan Estratégico Institucional - Carta de Navegación (PEI-CN)',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'PI-GPE-SEC-0006',nom:'Autoevaluación a nivel institucional de carreras de grado y/o programas de posgr',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'PI-GPE-SEC-0007',nom:'Elaboración del Informe de Rendición de Cuentas del Rector',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'PI-GPE-SEC-0008',nom:'Gestión de Respuesta a solicitudes de organismos de control externo asignados a ',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'PI-GPE-DIT-0001',nom:'Gestión de acompañamiento al Plan Operativo Anual (POA)',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'PI-GPE-DIT-0002',nom:'Gestión de acompañamiento del plan de mejora, plan de acción o similares',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'PI-GAI-AUI-0003',nom:'Examen especial de auditoría',mac:'Auditoría Interna',cat:'Estratégicos',own:'Adriana Alvear Muñoz'},
+  {cod:'PI-GAI-AUI-0004',nom:'Seguimiento de recomendaciones de auditoría',mac:'Auditoría Interna',cat:'Estratégicos',own:'Adriana Alvear Muñoz'},
+  {cod:'PI-GAI-AUI-0005',nom:'Emisión del informe de auditoría por la aplicación del proceso administrativo “B',mac:'Auditoría Interna',cat:'Estratégicos',own:'Adriana Alvear Muñoz'},
+  {cod:'PI-GAI-AUI-0006',nom:'Arqueo al fondo de Caja Chica',mac:'Auditoría Interna',cat:'Estratégicos',own:'Adriana Alvear Muñoz'},
+  {cod:'PI-GAI-AUI-0007',nom:'Arqueo de Caja de Recaudación',mac:'Auditoría Interna',cat:'Estratégicos',own:'Adriana Alvear Muñoz'},
+  {cod:'PI-GAD-COD-0001',nom:'Gestión de la calidad en la administración de documentos físicos y electrónicos',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-COD-0002',nom:'Inventario Documental',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-COD-0003',nom:'Radicación de Documentos para mesa de entrada',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-DOE-0001',nom:'Gestión de la Administración Electrónica',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-DOE-0002',nom:'Digitalización',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-NOA-0001',nom:'Transferencia documental',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-NOA-0002',nom:'Plan de Recursos Económicos para operación de archivo y documentación',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-NOA-0003',nom:'Gestión de Archivos Documentales',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-ORD-0001',nom:'Cuadro de Clasificación Documental',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-ORD-0002',nom:'Tabla de Retención Documental',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-PLA-0001',nom:'Gestión metodológica para la consecución de objetivos en la administración de do',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GAD-BAD-0001',nom:'Selección y eliminación documental',mac:'Archivo y Documentación',cat:'Apoyo y Soporte',own:'Willian Ladino Jimenez'},
+  {cod:'PI-GMC-ADM-0002',nom:'Jornadas de Inducción para estudiantes nuevos de las carreras de tercer nivel de',mac:'Admisiones y Marketing',cat:'Apoyo y Soporte',own:'Jasmin Castro Pincay'},
+  {cod:'PI-GMC-GWR-0001',nom:'Difusión de contenidos Web de la Universidad Politécnica Salesiana',mac:'Gestión Web y Redes Sociales',cat:'Apoyo y Soporte',own:'Pedro Rodríguez Lopez'},
+  {cod:'PI-GMC-GWR-0002',nom:'Creación, capacitación y soporte de sitios web UPS',mac:'Gestión Web y Redes Sociales',cat:'Apoyo y Soporte',own:'Pedro Rodríguez Lopez'},
+  {cod:'PI-GMC-GWR-0003',nom:'Gestión de la información para Rankings Universitarios para evaluación del desem',mac:'Gestión Web y Redes Sociales',cat:'Apoyo y Soporte',own:'Pedro Rodríguez Lopez'},
+  {cod:'PI-GMC-GWR-0004',nom:'Difusión de Contenidos Web en Instituciones Salesianas de Educación Superior (IU',mac:'Gestión Web y Redes Sociales',cat:'Apoyo y Soporte',own:'Pedro Rodríguez Lopez'},
+  {cod:'PI-GMC-COM-0001',nom:'Gestión de Sesiones del Consejo de Publicaciones',mac:'Comunicación',cat:'Apoyo y Soporte',own:'Angel Torres Toukoumidis'},
+  {cod:'PI-GMC-COM-0002',nom:'Cobertura, difusión de eventos y/o actividades institucionales',mac:'Comunicación',cat:'Apoyo y Soporte',own:'Angel Torres Toukoumidis'},
+  {cod:'PI-GMC-COM-0003',nom:'Difusión de contenidos comunicacionales',mac:'Comunicación',cat:'Apoyo y Soporte',own:'Angel Torres Toukoumidis'},
+  {cod:'PI-GMC-COM-0004',nom:'Gestión de envío de correos masivos y campañas de comunicación interna de la Uni',mac:'Comunicación',cat:'Apoyo y Soporte',own:'Angel Torres Toukoumidis'},
+  {cod:'PI-GSS-SSM-0001',nom:'Aprobación del reglamento de higiene y salud',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0002',nom:'Conformación y gestión de comités y subcomités de seguridad y salud en el trabaj',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0004',nom:'Gestión y Control de Contratistas',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0005',nom:'Implementación, uso del lactario y promoción de la lactancia materna',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0006',nom:'Auditoría Interna y de Seguimiento al Sistema de Gestión de Seguridad, Salud y M',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0009',nom:'Gestión de riesgos laborales ( identificación, evaluación, medición y control)',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0007',nom:'Investigación e identificación de una presunta enfermedad profesional y su repor',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0013',nom:'Selección, entrega e inspección de equipo de protección personal',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0003',nom:'Exámenes Ocupacionales',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0010',nom:'Directrices Médicas Ocupacionales (Levantamiento y Seguimiento)',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GSS-SSM-0008',nom:'Reporte de accidente laboral a ente gubernamental',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'AS-GAI-ADI-0002',nom:'Gestión de inventarios',mac:'Administración e Inventarios',cat:'Apoyo y Soporte',own:'Sonia Santos Sagbay'},
+  {cod:'AS-GAI-ADI-0004',nom:'Gestión de Activos Fijos',mac:'Administración e Inventarios',cat:'Apoyo y Soporte',own:'Sonia Santos Sagbay'},
+  {cod:'PI-GAI-AUI-0001',nom:'Regularización de Transacciones de Cobros Duplicados para la Sede Guayaquil',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'PI-GAI-AUI-0002',nom:'Seguimiento a la Recuperación de las Cuentas por Cobrar por Transacciones Duplic',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0001',nom:'Recaudación, facturación y cierre diario',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0002',nom:'Tratamiento de Cheques Caducados',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0003',nom:'Conciliación Bancaria mensual',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0004',nom:'Cuadre de Inventarios Mensual',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0005',nom:'Conciliación de Tarjetas de Crédito Corporativa',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0006',nom:'Constatación Física de Inventarios a las Bodegas de Materiales de Consumo Intern',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0007',nom:'Pago a Proveedores',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0010',nom:'Cuadre y liquidación de planillas del IESS y Beneficios Sociales',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0008',nom:'Cuadre Contable de Activos Fijos y Depreciación',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0009',nom:'Emisión de Notas de Crédito',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-CON-0011',nom:'Registro contable de pago de nómina, beneficios sociales, incentivos institucion',mac:'Contabilidad',cat:'Apoyo y Soporte',own:'Marcos Chaca Lucero'},
+  {cod:'AS-GFC-DIT-0001',nom:'Cambio de Forma de Pago de Prematrícula para Grado y Posgrado',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'AS-GFC-DIT-0002',nom:'Emisión de Certificados de Costos de Grado y Posgrado',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'AS-GFC-PFS-0004',nom:'Elaboración de Presupuesto Institucional',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'AS-GFC-DIT-0003',nom:'Ejecución del presupuesto de Nómina',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'AS-GFC-DIT-0004',nom:'Ejecución del Presupuesto de Gastos',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'AS-GFC-DIT-0005',nom:'Asignación de presupuesto para proyectos de investigación e incentivos a la  pro',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'AS-GFC-PFS-0001',nom:'Gestión del Comité de Adquisiciones',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'AS-GFC-PFS-0002',nom:'Colocación de Inversiones Bancarias',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'GBU-PR-ABE-0001',nom:'Asignación de Beca Equidad Social por Sistema de Pensión Diferenciada a Estudian',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'GBU-PR-SSE-0002',nom:'Seguimiento Social de Estudiantes',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0001',nom:'Revisión de nivel de beca/quintil (Ficha Socioeconómica Ampliada)',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0002',nom:'Asignación de Beca para carreras de tercer nivel en las modalidades de estudio q',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0003',nom:'Cambio manual del nivel de beca',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0004',nom:'Actualización de datos ficha socioeconómica',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0005',nom:'Gestión de Crédito con Entidades Financieras para estudiantes de Grado',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0006',nom:'Revisión de documentos de respaldo de solicitudes enviada a Bienestar Universita',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0007',nom:'Gestión de Seguro de Accidentes Personales a estudiantes de Grado, Tecnología y ',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0008',nom:'Acompañamiento a Estudiantes con Discapacidad, Necesidades Específicas del Apren',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0011',nom:'Gestión de prórroga de pago de matrícula y exámenes para las carreras de Grado.',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0012',nom:'Direccionamiento o derivación de la atención psicológica para los estudiantes de',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GBU-DIT-0013',nom:'Seguimiento de Bienestar Universitario a la Federación de Estudiantes de la Univ',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GTH-DEH-0001',nom:'Evaluación del Desempeño para personal en Gestión Administrativa',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'AS-GTH-DEH-0002',nom:'Gestión y Desarrollo de Competencias',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'AS-GTH-GEM-0003',nom:'Desvinculación Laboral',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'AS-GTH-GEM-0002',nom:'Diseño, Análisis y Descripción de Cargos',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'AS-GTH-GRL-0001',nom:'Acompañamiento Laboral',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'AS-GTH-GRL-0002',nom:'Seguimiento de asistencia',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'AS-GTH-GRL-0003',nom:'Gestión de vacaciones',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'AS-GTH-GRL-0004',nom:'Gestión de Nómina',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'AS-GTH-GRL-0005',nom:'Subsidios por Enfermedad o Maternidad',mac:'Gestión del Talento Humano',cat:'Apoyo y Soporte',own:'Guido Flores Sisalima'},
+  {cod:'CM-GII-EMI-0002',nom:'Preparación y aprobación del programa de incubación',mac:'Emprendimiento e Innovación',cat:'Servicio Comunitario',own:'Luis Guerrero Vasquez'},
+  {cod:'CM-GII-EMI-0003',nom:'Solicitud de generación de contenidos para campaña comunicacional del programa d',mac:'Emprendimiento e Innovación',cat:'Servicio Comunitario',own:'Luis Guerrero Vasquez'},
+  {cod:'CM-GII-EMI-0004',nom:'Incorporación de expertos externos (perks) para apoyar al programa de incubación',mac:'Emprendimiento e Innovación',cat:'Servicio Comunitario',own:'Luis Guerrero Vasquez'},
+  {cod:'CM-GII-EMI-0005',nom:'Convocatoria y monitoreo de inscripciones para el programa de incubación',mac:'Emprendimiento e Innovación',cat:'Servicio Comunitario',own:'Luis Guerrero Vasquez'},
+  {cod:'CM-GII-EMI-0006',nom:'Manejo de Inventario de Startlabs',mac:'Emprendimiento e Innovación',cat:'Servicio Comunitario',own:'Luis Guerrero Vasquez'},
+  {cod:'CM-GII-EMI-0007',nom:'Mantenimiento de equipos de Startlabs',mac:'Emprendimiento e Innovación',cat:'Servicio Comunitario',own:'Luis Guerrero Vasquez'},
+  {cod:'GAC-PR-ACT-0001',nom:'Admisión para las carreras de tecnología (modalidad dual)',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GAC-PR-MCT-0002',nom:'Matrícula para las carreras de tecnología (modalidad dual)',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GAC-PR-PPCT-0005',nom:'Prácticas Preprofesionales carreras de tecnología (modalidad dual)',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GAC-PR-RSCT-0003',nom:'Registro del sílabo y calificaciones en las carreras de Tecnología, modalidad du',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0001',nom:'Validación de la Lengua Extranjera para carreras de tercer nivel en las modalida',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0002',nom:'Cambio de Tipo de Asistencia en Asignaturas de Carreras de Grado Presenciales',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0003',nom:'Cambio de modalidad de carrera para proyectos de ajuste curricular',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0004',nom:'Cambio de malla para carreras de grado en las modalidades que oferta la Universi',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0005',nom:'Retiro Académico en períodos académicos anteriores al vigente para carreras de t',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0006',nom:'Cambio de Grupo para carreras de tercer nivel en las modalidades que oferta la U',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0007',nom:'Homologación por Análisis Comparativo de Contenidos para carreras de tercer nive',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0008',nom:'Homologación por Validación de Conocimientos para carreras de tercer nivel en la',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0009',nom:'Admisión para la carrera de odontología modalidad presencial',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0010',nom:'Gestión del Examen de Ingreso para las carreras de tercer nivel modalidad presen',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0011',nom:'Curso de Nivelación para la carrera de odontología modalidad presencial',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0012',nom:'Cambio de sede para carreras de tercer nivel con modalidad de oferta presencial ',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0013',nom:'Retiro de asignaturas en carreras de tercer nivel en las diversas modalidades qu',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0014',nom:'Reingreso para Carreras de tercer nivel en las modalidades de estudio que oferta',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0015',nom:'Admisión para aspirantes en las Carreras de tercer nivel que oferta la Universid',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0016',nom:'Incremento de Asignaturas para carreras de tercer nivel en las modalidades de es',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0017',nom:'Prácticas Preprofesionales para las Carreras de Grado en las modalidades de estu',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0019',nom:'Gestión de Sesiones de Consejo de Carreras',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0023',nom:'Gestión de cambios al trabajo de titulación para carreras de tercer nivel en las',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0026',nom:'Gestión del Distributivo Docente',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-MA-005',nom:'Movilidad Estudiantil como Institución de Acogida para el Nivel de Grado - Huésp',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-MA-001',nom:'Matrícula para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-MA-004',nom:'Tercera Matrícula para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GP-ED-001',nom:'Planificación de la Evaluación de Desempeño de Actividades Docentes del Personal',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-PC-001',nom:'Gestión de Proyectos de Carrera para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GAC-PR-RSI-0001',nom:'Registro de Sílabo y Calificaciones para Idiomas',mac:'Instituto de Idiomas',cat:'Servicio Comunitario',own:'Magno Vivar Hurtado'},
+  {cod:'CM-GAC-IDI-0002',nom:'Publicación de cursos ofertados para el sitio web del Instituto de Idiomas',mac:'Instituto de Idiomas',cat:'Servicio Comunitario',own:'Magno Vivar Hurtado'},
+  {cod:'CM-GAC-IDI-0003',nom:'Examen de Ubicación de lengua extranjera para carreras de tercer nivel y externo',mac:'Instituto de Idiomas',cat:'Servicio Comunitario',own:'Magno Vivar Hurtado'},
+  {cod:'CM-GAC-IDI-0005',nom:'Matrículas de cursos paracadémicos de Idiomas para las carreras de tercer nivel ',mac:'Instituto de Idiomas',cat:'Servicio Comunitario',own:'Magno Vivar Hurtado'},
+  {cod:'CM-GAC-IDI-0004',nom:'Cambio de grupo paracadémico de Idiomas',mac:'Instituto de Idiomas',cat:'Servicio Comunitario',own:'Magno Vivar Hurtado'},
+  {cod:'CM-GAC-MEL-0001',nom:'Oferta de Asignaturas Modalidad En Línea de Carreras en Modalidad Presencial',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-PP-002',nom:'Plan de Contingencia para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-GC-001',nom:'Gestión de Calendario de Programa de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-MA-003',nom:'Anulación de Matrícula para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-MA-001',nom:'Matrícula para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-IR-002',nom:'Retiro de Asignatura, curso o equivalente para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-MA-006',nom:'Reingreso a un Programa de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-POS-0002',nom:'Admisión para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-GR-001',nom:'Trabajo de Titulación para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-CA-001',nom:'Calificaciones para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-MA-002',nom:'Segunda Inscripción de asignatura, curso o equivalente para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-POS-0001',nom:'Gestión de Sesiones de Consejo de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-HO-002',nom:'Homologación por Validación de Conocimientos y Resultados de Aprendizaje para el',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-HO-001',nom:'Homologación por Análisis Comparativos de Contenidos para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'AS-GPR-PRO-0001',nom:'Gestión de asesoría legal',mac:'Procuraduría',cat:'Apoyo y Soporte',own:'Ana Maria Reino Molina'},
+  {cod:'AS-GPR-PRO-0002',nom:'Defensa técnica',mac:'Procuraduría',cat:'Apoyo y Soporte',own:'Ana Maria Reino Molina'},
+  {cod:'AS-GPR-PRO-0003',nom:'Gestión de sesiones en Unidades Académicas y Unidades Técnicas de Apoyo',mac:'Procuraduría',cat:'Apoyo y Soporte',own:'Ana Maria Reino Molina'},
+  {cod:'AS-GSG-SEG-0001',nom:'Emisión de Títulos para carreras de tercer nivel y programas de cuarto nivel en ',mac:'Secretaría General',cat:'Apoyo y Soporte',own:'Maria Lorena Cañizares Jarrin'},
+  {cod:'AS-GSG-SEG-0002',nom:'Emisión de Certificados (
+Gestión de emisión de Certificados Electrónicos )',mac:'Secretaría General',cat:'Apoyo y Soporte',own:'Maria Lorena Cañizares Jarrin'},
+  {cod:'SG-PRO-001',nom:'Gestión de Certificados del Rector',mac:'Secretaría General',cat:'Apoyo y Soporte',own:'Maria Lorena Cañizares Jarrin'},
+  {cod:'AS-GSG-SEG-0003',nom:'Gestión de Sesiones de Consejo Superior',mac:'Secretaría General',cat:'Apoyo y Soporte',own:'Maria Lorena Cañizares Jarrin'},
+  {cod:'AS-GSG-SEG-0004',nom:'Gestión de recepción y respuesta de correspondencia del Rector o delegado',mac:'Secretaría General',cat:'Apoyo y Soporte',own:'Maria Lorena Cañizares Jarrin'},
+  {cod:'AS-GSG-SEG-0005',nom:'Gestión de Nombramientos',mac:'Secretaría General',cat:'Apoyo y Soporte',own:'Maria Lorena Cañizares Jarrin'},
+  {cod:'AS-GBU-DIT-0014',nom:'Registro de Atenciones en Bienestar Universitario',mac:'Bienestar Universitario',cat:'Apoyo y Soporte',own:'María Gabriela Arias Yanzaguano'},
+  {cod:'AS-GED-EDV-0001',nom:'Apertura de plataforma AVAC para Educación Continua, Carreras y Programas de Pos',mac:'Unidad de Estudios a Distancia y Virtual',cat:'Apoyo y Soporte',own:'Miguel Arcos Argudo'},
+  {cod:'AS-GED-EDV-0004',nom:'Monitoreo en línea',mac:'Unidad de Estudios a Distancia y Virtual',cat:'Apoyo y Soporte',own:'Miguel Arcos Argudo'},
+  {cod:'AS-GED-EDV-0002',nom:'Gestión de Ambientes Virtuales (Archivo, Recuperación y Eliminación)',mac:'Unidad de Estudios a Distancia y Virtual',cat:'Apoyo y Soporte',own:'Miguel Arcos Argudo'},
+  {cod:'AS-GPA-SET-0001',nom:'Gestión de Tutoría entre pares al estilo salesiano (TEPes)',mac:'Pastoral',cat:'Clave - Misional',own:'Luis Banegas Padilla'},
+  {cod:'AS-GPA-SET-0002',nom:'Ingreso a los grupos del asociacionismo salesiano universitario',mac:'Pastoral',cat:'Clave - Misional',own:'Luis Banegas Padilla'},
+  {cod:'AS-GPA-SET-0003',nom:'Gestión de eventos pastorales',mac:'Pastoral',cat:'Clave - Misional',own:'Luis Banegas Padilla'},
+  {cod:'AS-GPA-SET-0004',nom:'Gestión de acompañamiento vocacional y voluntariado internacional',mac:'Pastoral',cat:'Clave - Misional',own:'Luis Banegas Padilla'},
+  {cod:'CM-GVE-VIS-0001',nom:'Gestión de proyectos de Vinculación con la Sociedad',mac:'Vinculación con la Sociedad',cat:'Clave - Misional',own:'Luis Calle Arevalo'},
+  {cod:'CM-GVE-VIS-0003',nom:'Gestión de Convenios de Vinculación con la Sociedad',mac:'Vinculación con la Sociedad',cat:'Clave - Misional',own:'Luis Calle Arevalo'},
+  {cod:'CM-GVE-CUC-0001',nom:'Aprobación de cursos de Capacitación, Actualización o Certificación de Competenc',mac:'Unidad de Educación Continua',cat:'Servicio Comunitario',own:'Miguel Arcos Argudo'},
+  {cod:'CM-GVE-EDC-0001',nom:'Gestión de Negociación de Cursos de Capacitación, Actualización y Certificación ',mac:'Unidad de Educación Continua',cat:'Servicio Comunitario',own:'Miguel Arcos Argudo'},
+  {cod:'TI-PRO-007',nom:'Atención de solicitudes de soporte de TI',mac:'Tecnologías de la Información',cat:'Apoyo y Soporte',own:'Mauricio Ortiz Ochoa'},
+  {cod:'TI-PRO-008',nom:'Clasificación, almacenamiento, transferencia y uso de datos e información',mac:'Tecnologías de la Información',cat:'Apoyo y Soporte',own:'Mauricio Ortiz Ochoa'},
+  {cod:'TI-PRO-006',nom:'Mantenimiento de infraestructura tecnológica',mac:'Tecnologías de la Información',cat:'Apoyo y Soporte',own:'Mauricio Ortiz Ochoa'},
+  {cod:'AS-GBI-DEC-0001',nom:'Actualización del Acervo Bibliográfico',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'AS-GBI-DEC-0002',nom:'Conservación y preservación de la colección bibliográfica',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'AS-GBI-DEC-0004',nom:'Control de existencia bibliográfica',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'AS-GBI-BIB-0001',nom:'Circulación del Material Bibliográfico',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'AS-GBI-BIB-0003',nom:'Procesamiento Técnico del Material Bibliográfico',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'AS-GBI-BIB-0004',nom:'Seguimiento interno de espacio de lectura y estanterías',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'AS-GBI-BIB-0005',nom:'Gestión de Biblioteca',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'AS-GBI-SEE-0001',nom:'Formación a Usuarios de Biblioteca',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'AS-GBI-SEE-0002',nom:'Servicios especializados de biblioteca para usuarios con discapacidad',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'CDP-PRO-001',nom:'Acompañamiento para el levantamiento inicial o revisión de información documenta',mac:'Ciencia de Datos y Procesos',cat:'Estratégicos',own:'Jessica Zúñiga García'},
+  {cod:'CDP-PRO-002',nom:'Revisión y aprobación de información documentada relativa a procedimientos',mac:'Ciencia de Datos y Procesos',cat:'Estratégicos',own:'Jessica Zúñiga García'},
+  {cod:'CDP-PRO-003',nom:'Análisis y procesamiento de solicitudes de datos e información',mac:'Ciencia de Datos y Procesos',cat:'Estratégicos',own:'Jessica Zúñiga García'},
+  {cod:'AS-GBI-DEC-0005',nom:'Servicio de suscripción a Material Bibliográfico',mac:'Biblioteca',cat:'Apoyo y Soporte',own:'Sylvia Rosero Palacios'},
+  {cod:'CM-GII-EMI-0008',nom:'Servicios de los laboratorios de Prototipado del Ecosistema de Emprendimiento e ',mac:'Emprendimiento e Innovación',cat:'Servicio Comunitario',own:'Luis Guerrero Vasquez'},
+  {cod:'AS-GNA-NAF-0001',nom:'Gestión Administrativa de prácticas preprofesionales en el Núcleo de Apoyo Conta',mac:'Núcleo de Apoyo Contable y Fiscal',cat:'Servicio Comunitario',own:'Diana Arce Bau'},
+  {cod:'AS-GAI-ADI-0010',nom:'Constatación física de activos fijos y bienes de control',mac:'Administración e Inventarios',cat:'Apoyo y Soporte',own:'Sonia Santos Sagbay'},
+  {cod:'GP-ED-002',nom:'Ejecución de la Evaluación de Desempeño de Actividades Docentes del Personal Aca',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GP-ED-003',nom:'Socialización de Resultados  de la Evaluación de Desempeño de Actividades Docent',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GC-SC-002',nom:'Sesión de Consejo Académico',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-CA-001',nom:'Calificaciones para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-GC-001',nom:'Gestión de Calendario Académico para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-GR-001',nom:'Trabajo de Titulación para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-GR-002',nom:'Examen de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-GR-003',nom:'Graduación para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-IR-003',nom:'Retiro Académico para el Nivel de Grado en Período Académico Vigente',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-MA-002',nom:'Condición de Oyente para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-MA-003',nom:'Anulación de Matrícula para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-OA-001',nom:'Oferta Académica para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-PC-002',nom:'Reforma o Adaptación Curricular para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-PC-003',nom:'Actualización de Programas Analíticos para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-PC-004',nom:'Cierre de Carrera',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'GR-VS-002',nom:'Actualización Docente para el Nivel de Grado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GII-EMI-0009',nom:'Eventos StartUPS',mac:'Emprendimiento e Innovación',cat:'Servicio Comunitario',own:'Luis Guerrero Vasquez'},
+  {cod:'PO-MA-004',nom:'Validación de Suficiencia de Lengua Extranjera para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-OA-001',nom:'Oferta Académica para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-OA-002',nom:'Identificación de Espacios Físicos para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-OA-003',nom:'Asignación de Espacios Físicos para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-PP-001',nom:'Proyecto de Programas para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'PO-VS-002',nom:'Actualización Docente para el Nivel de Posgrado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'DO-CA-001',nom:'Calificaciones para Programas de Doctorado',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CJG-PRO-002',nom:'Gestión de Planificación, Planes y Proyectos del Consultorio Jurídico Gratuito.',mac:'Consultorio Jurídico Gratuito',cat:'Servicio Comunitario',own:'Andrea Tapia Cárdenas'},
+  {cod:'CJG-PRO-003',nom:'Inducción de los miembros del Consultorio Jurídico Gratuito de la Universidad Po',mac:'Consultorio Jurídico Gratuito',cat:'Servicio Comunitario',own:'Andrea Tapia Cárdenas'},
+  {cod:'AS-GAI-ADI-0011',nom:'Baja de Activos Fijos y Bienes de Control',mac:'Administración e Inventarios',cat:'Apoyo y Soporte',own:'Sonia Santos Sagbay'},
+  {cod:'AS-GAI-ADI-0006',nom:'Revisión y reasignación de activos fijos y bienes de control por desvinculación ',mac:'Administración e Inventarios',cat:'Apoyo y Soporte',own:'Sonia Santos Sagbay'},
+  {cod:'CM-GAC-GRA-0024',nom:'Gestión de recuperación de aprendizajes para carreras de tercer nivel en las mod',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'CM-GAC-GRA-0025',nom:'Gestión de mejoramiento académico para carreras de tercer nivel en las modalidad',mac:'Gestión Académica',cat:'Clave - Misional',own:'Angela Flores Ortiz'},
+  {cod:'AS-GPR-PRO-0004',nom:'Permiso y financiamiento para participar en eventos académicos nacionales e inte',mac:'Procuraduría',cat:'Apoyo y Soporte',own:'Ana Maria Reino Molina'},
+  {cod:'AS-GFC-PFS-0003',nom:'Gestión de Siniestros de la Póliza Multiriesgos, Vehículos y Responsabilidad Civ',mac:'Presupuesto, Finanzas y Seguros',cat:'Apoyo y Soporte',own:'Wendy Perugachi Salamea'},
+  {cod:'PI-GMC-COM-0007',nom:'Socialización de documentos en el Marco Legal y la Gestión Institucional',mac:'Comunicación',cat:'Apoyo y Soporte',own:'Angel Torres Toukoumidis'},
+  {cod:'AS-GPA-SET-0005',nom:'Acreditación de los Grupos de Asociacionismo Salesiano Universitario',mac:'Pastoral',cat:'Clave - Misional',own:'Luis Banegas Padilla'},
+  {cod:'PI-GSS-SSM-0012',nom:'Gestión de Acciones correctivas, preventivas y de mejora',mac:'Unidad de Seguridad, Salud y Medio Ambiente',cat:'Apoyo y Soporte',own:'Klever Ochoa Briones'},
+  {cod:'PI-GPE-SEC-0001',nom:'Seguimiento a la ejecución del Plan Operativo Anual, plan de mejoras, plan de ac',mac:'Planeación, Evaluación y Acreditación',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'GCA-PRO-001',nom:'Control de la documentación',mac:'Gestión de Calidad',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'TI-PRO-005',nom:'Monitoreo de componentes del servicio de TI',mac:'Tecnologías de la Información',cat:'Apoyo y Soporte',own:'Mauricio Ortiz Ochoa'},
+  {cod:'GCA-PRO-002',nom:'Revisión por la dirección',mac:'Gestión de Calidad',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'GCA-PRO-003',nom:'Auditorías Internas de Calidad',mac:'Gestión de Calidad',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'GCA-PRO-004',nom:'Acciones correctivas',mac:'Gestión de Calidad',cat:'Estratégicos',own:'Germán Parra González'},
+  {cod:'GCA-PRO-005',nom:'Control de No Conformidades',mac:'Gestión de Calidad',cat:'Estratégicos',own:'Germán Parra González'}
+];
+var OWNERS=[
+  {n:1,ciudad:'Cuenca',owner:'Adriana Sabina Alvear Muñoz',cargo:'Auditora Interna',email:'aalvear@ups.edu.ec',steward:'Ismael Antonio Pulla Huiracocha',cargo_s:'Asistente de Auditoría',email_s:'ipulla@ups.edu.ec',estado:'Completo'},
+  {n:2,ciudad:'Cuenca',owner:'Jessica Alexandra Zúñiga García',cargo:'Secretaria Técnico de Ciencia de Datos y Procesos',email:'jzuniga@ups.edu.ec',steward:'Christian Rolando Oyola Flores',cargo_s:'Responsable de la Coordinación de Gestión de Datos',email_s:'coyola@ups.edu.ec',estado:'Completo'},
+  {n:3,ciudad:'Cuenca',owner:'Germán Ernesto Parra González',cargo:'Secretario Técnico de Planeación, Evaluación y Acreditación',email:'gparra@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:4,ciudad:'Cuenca',owner:'Angela Cecilia Flores Ortiz',cargo:'Vicerrectora Académica',email:'aflores@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:5,ciudad:'Cuenca',owner:'Vladimir Espartaco Robles Bykbaev',cargo:'Vicerrector de Posgrados',email:'vrobles@ups.edu.ec',steward:'Cristian Teodoro Diaz Gutierrez',cargo_s:'Docente/ Encargado de Procesos del Vicerrectorado de Posgrado',email_s:'cdiaz@ups.edu.ec',estado:'Completo'},
+  {n:6,ciudad:'Cuenca',owner:'Esteban Mauricio Inga Ortega',cargo:'Vicerrector de Investigación',email:'einga@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:7,ciudad:'Quito',owner:'Sylvia Tatiana Rosero Palacios',cargo:'Secretaria Técnica de Vinculación con la Sociedad',email:'srosero@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:8,ciudad:'Cuenca',owner:'Luis Ángel Banegas Padilla',cargo:'Director Técnico de Pastoral',email:'lbanegas@ups.edu.ec',steward:'Carmen Elizabeth Pillco Guaman',cargo_s:'Asistente de Pastoral',email_s:'cpillco@ups.edu.ec',estado:'Completo'},
+  {n:9,ciudad:'Cuenca',owner:'Wendy Dayana Perugachi Salamea',cargo:'Secretaria Técnica de Presupuesto, Finanzas y Seguros',email:'wperugachi@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:10,ciudad:'Quito',owner:'Tania Alexandra Chicaiza Villalba',cargo:'Directora Técnica de Administración e Inventarios',email:'tchicaiza@ups.edu.ec',steward:'Gabriela Yánez',cargo_s:'Auxiliar 2 de DATAI',email_s:'gyanez@ups.edu.ec',estado:'Completo'},
+  {n:11,ciudad:'Cuenca',owner:'Sonia Patricia Santos Sagbay',cargo:'Directora Técnica de Administración e Inventarios',email:'ssantos@ups.edu.ec',steward:'Mariela Noguera',cargo_s:'Asistente',email_s:'mnogueray@ups.edu.ec',estado:'Completo'},
+  {n:12,ciudad:'Guayaquil',owner:'Carlos Luis Perez Maldonado',cargo:'Director Técnico de Administración e Inventarios',email:'cperez@ups.edu.ec',steward:'Gabriela Lilibeth Rodríguez Malta',cargo_s:'Auxiliar 1 DATAI',email_s:'grodriguezm@ups.edu.ec',estado:'Completo'},
+  {n:13,ciudad:'Cuenca',owner:'Willian Fernando Ladino Jimenez',cargo:'Secretario Técnico de Archivo y Documentación',email:'wladino@ups.edu.ec',steward:'Javier Sebastián Sánchez Dumas',cargo_s:'Auxiliar 2 Archivo y Documentación',email_s:'jsanchezd@ups.edu.ec',estado:'Completo'},
+  {n:14,ciudad:'Guayaquil',owner:'Jasmin Daria Castro Pincay',cargo:'Secretaria Técnica de Admisiones y Marketing',email:'jcastrop@ups.edu.ec',steward:'Maria Auxiliadora Egas Garcia',cargo_s:'Auxiliar II',email_s:'megas@ups.edu.ec',estado:'Completo'},
+  {n:15,ciudad:'Cuenca',owner:'Pedro Javier Rodríguez Lopez',cargo:'Secretario Técnico de Gestión Web y Redes Sociales',email:'prodriguezl@ups.edu.ec',steward:'Miguel Leonardo Reino Torres',cargo_s:'Asistente de Edición Web',email_s:'mreino@ups.edu.ec',estado:'Completo'},
+  {n:16,ciudad:'Cuenca',owner:'Angel Luis Torres Toukoumidis',cargo:'Secretario Técnico de Comunicación',email:'atorrest@ups.edu.ec',steward:'Moisés Pallo Chiguano',cargo_s:'Asistente de Publicaciones',email_s:'jpallo@ups.edu.ec',estado:'Completo'},
+  {n:17,ciudad:'Cuenca',owner:'Blas Orlando Garzón Vera',cargo:'Secretario Técnico de Gestión Cultural',email:'bgarzon@ups.edu.ec',steward:'Blas Orlando Garzón Vera',cargo_s:'Secretario Técnico de Gestión Cultural',email_s:'bgarzon@ups.edu.ec',estado:'Completo'},
+  {n:18,ciudad:'Cuenca',owner:'Klever Humberto Ochoa Briones',cargo:'Técnico en Seguridad Salud y Medio Ambiente',email:'kochoa@ups.edu.ec',steward:'Médicos ocupacionales (7 sedes)',cargo_s:'Médicos ocupacionales',email_s:'mallaica@ups.edu.ec',estado:'Completo'},
+  {n:19,ciudad:'Cuenca',owner:'Marcos Xavier Chaca Lucero',cargo:'Contador General',email:'xchaca@ups.edu.ec',steward:'Gloria De Jesús',cargo_s:'Asistente Contador General',email_s:'jdjesus@ups.edu.ec',estado:'Pendiente'},
+  {n:20,ciudad:'Quito',owner:'Silvia Maria Gomez Andrade',cargo:'Secretaria Técnica de Bienestar Universitario',email:'sgomez@ups.edu.ec',steward:'Edwin Alexander Bermúdez Ayala',cargo_s:'Asistente',email_s:'ebermudez@ups.edu.ec',estado:'Completo'},
+  {n:21,ciudad:'Cuenca',owner:'Guido Paul Flores Sisalima',cargo:'Secretario Técnico de Gestión de Talento Humano',email:'pflores@ups.edu.ec',steward:'Lic. Blanca Ortiz',cargo_s:'Asistente de Talento Humano',email_s:'bortiz@ups.edu.ec',estado:'Completo'},
+  {n:22,ciudad:'Cuenca',owner:'Ana Maria Reino Molina',cargo:'Procuradora',email:'areino@ups.edu.ec',steward:'Juan Carlos Sánchez Armijos',cargo_s:'Asistente de Procuraduría',email_s:'jcsanchez@ups.edu.ec',estado:'Completo'},
+  {n:23,ciudad:'Cuenca',owner:'Miguel Arturo Arcos Argudo',cargo:'Director Unidad de Estudios a Distancia y Virtual',email:'marcos@ups.edu.ec',steward:'Dra. Dayana Pamela Reyes Vásquez',cargo_s:'Docente Ocasional Derecho En Línea',email_s:'dreyesv@ups.edu.ec',estado:'Completo'},
+  {n:24,ciudad:'Cuenca',owner:'Mauricio Sergio Ortiz Ochoa',cargo:'Secretario Técnico de Tecnologías de la Información',email:'mortizo@ups.edu.ec',steward:'Ing. Jairo Suarez Arizaga',cargo_s:'Coordinador de Explotación - Rectorado',email_s:'jsuarez@ups.edu.ec',estado:'Completo'},
+  {n:25,ciudad:'Quito',owner:'Sylvia Tatiana Rosero Palacios',cargo:'Responsable de Biblioteca',email:'srosero@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:26,ciudad:'Cuenca',owner:'Javier Francisco Toral Iñiguez',cargo:'Secretario Técnico de Relaciones Internacionales',email:'jtoral@ups.edu.ec',steward:'Javier Francisco Toral Iñiguez',cargo_s:'Secretario Técnico RRII',email_s:'jtoral@ups.edu.ec',estado:'Completo'},
+  {n:27,ciudad:'Cuenca',owner:'Luis Fernando Guerrero Vasquez',cargo:'Secretario Técnico de Emprendimiento e Innovación',email:'lguerrero@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:28,ciudad:'Cuenca',owner:'Magno Alejandro Vivar Hurtado',cargo:'Coordinador de Idiomas',email:'mvivar@ups.edu.ec',steward:'Luis Enrique Romero Tapia',cargo_s:'Técnico Docente',email_s:'lromero@ups.edu.ec',estado:'Completo'},
+  {n:29,ciudad:'Cuenca',owner:'Andrea Estefania Tapia Cárdenas',cargo:'Coordinadora del Consultorio Jurídico Gratuito',email:'atapiac1@ups.edu.ec',steward:'Emmanuel David Carrión Quezada',cargo_s:'Secretario del Consultorio Jurídico',email_s:'ecarrionq@ups.edu.ec',estado:'Completo'},
+  {n:30,ciudad:'Cuenca',owner:'Diana Catalina Arce Bau',cargo:'Coordinadora del NAF',email:'darce@ups.edu.ec',steward:'Erika Priscila Zamora Cabrera',cargo_s:'Auxiliar 1 Secretaría / NAF',email_s:'ezamora@ups.edu.ec',estado:'Completo'},
+  {n:31,ciudad:'Cuenca',owner:'Prissila Tatiana Espinoza Macancela',cargo:'Directora Centro de Mediación',email:'pespinozam@ups.edu.ec',steward:'Doménica Johanna Garzón Rojas',cargo_s:'Asistente Jurídica del Centro de Mediación',email_s:'dgarzonr@ups.edu.ec',estado:'Completo'},
+  {n:32,ciudad:'Cuenca',owner:'Mónica Del Carmen Brito Solano',cargo:'Directora de Carrera de Medicina Veterinaria',email:'mbritos@ups.edu.ec',steward:'María Paz Galarza Alvarado',cargo_s:'Docente Jefe de Área de Profesionalización',email_s:'mgalarza@ups.edu.ec',estado:'Completo'},
+  {n:33,ciudad:'Cuenca',owner:'Luis Alfredo Calle Arevalo',cargo:'Docente',email:'lcallea@ups.edu.ec',steward:'Fátima Jesenia López Sojos',cargo_s:'Asistente Dirección Técnica de Vinculación',email_s:'flopezs@ups.edu.ec',estado:'Completo'},
+  {n:34,ciudad:'Cuenca',owner:'Sandra Catalina Vazquez Farfan',cargo:'Coordinadora de la Clínica Odontológica',email:'svazquez@ups.edu.ec',steward:'Od. Paulina Belén Ortiz Ortega',cargo_s:'Auxiliar 2 de clínicas',email_s:'portizo@ups.edu.ec',estado:'Completo'},
+  {n:35,ciudad:'Quito',owner:'Mishell Stephanie Taboada Garzon',cargo:'Coordinadora de la Clínica Odontológica',email:'mtaboada@ups.edu.ec',steward:'Verónica Lissette Mosquera Cisneros',cargo_s:'Docente Responsable técnico clínica odontológica',email_s:'vmosquera@ups.edu.ec',estado:'Completo'},
+  {n:36,ciudad:'Guayaquil',owner:'David Alejandro Villacres Galarza',cargo:'Coordinador de la Clínica Odontológica',email:'dvillacres@ups.edu.ec',steward:'Daniel Galarza Dazza',cargo_s:'Aux. 2 de laboratorio / Clínica odontológica',email_s:'dgalarzad@ups.edu.ec',estado:'Completo'},
+  {n:37,ciudad:'Cuenca',owner:'Maria Lorena Cañizares Jarrin',cargo:'Coordinadora del Centro Psicológico',email:'lcanizares@ups.edu.ec',steward:'Tatiana Leonor Patiño Torres',cargo_s:'Psicóloga del Centro Psicológico Padre Carlos Crespi',email_s:'tpatinot@ups.edu.ec',estado:'Completo'},
+  {n:38,ciudad:'Quito',owner:'María Jose Boada Suraty',cargo:'Coordinadora del Centro Psicológico',email:'mboada@ups.edu.ec',steward:'Sofía Chang Araujo',cargo_s:'Auxiliar 1 de Secretaría de Campus',email_s:'schang@ups.edu.ec',estado:'Completo'},
+  {n:39,ciudad:'Cuenca',owner:'María Gabriela Arias Yanzaguano',cargo:'Directora Técnica de Bienestar Estudiantil',email:'mariasy@ups.edu.ec',steward:'Lilian Patricia Brito Perez',cargo_s:'Asistente Dirección Técnica de Bienestar Universitario',email_s:'lbrito@ups.edu.ec',estado:'Completo'},
+  {n:40,ciudad:'Cuenca',owner:'María Alejandrina Tocachi Narvaez',cargo:'Directora Técnica de Presupuesto y Finanzas',email:'mtocachi@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:41,ciudad:'Guayaquil',owner:'Emay Giomar Jaramillo Rodríguez',cargo:'Directora Técnica de Bienestar Universitario',email:'ejaramillor@ups.edu.ec',steward:'Ps. María Alexandra López Palacios',cargo_s:'Asistente de Bienestar Universitario Sede Guayaquil',email_s:'mlopezp@ups.edu.ec',estado:'Completo'},
+  {n:42,ciudad:'Guayaquil',owner:'Lizbeth Victoria Izquieta Chevez',cargo:'Directora Técnica de Emprendimiento e Innovación',email:'lizquieta@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:43,ciudad:'Guayaquil',owner:'Bélgica Beatriz Calle Zumba',cargo:'Directora Técnica de Presupuesto y Finanzas',email:'bcalle@ups.edu.ec',steward:'Roy Bryan Rivadeneira Lara',cargo_s:'Auxiliar 1 de Contabilidad',email_s:'rrivadeneiral@ups.edu.ec',estado:'Completo'},
+  {n:44,ciudad:'Guayaquil',owner:'María de los Ángeles Andrade Zavala',cargo:'Directora Técnica de Gestión Cultural',email:'mandradez@ups.edu.ec',steward:'Jazmin Yessenia Rizzo Ramirez',cargo_s:'Instructor 1 de Cultura',email_s:'jrizzo@ups.edu.ec',estado:'Completo'},
+  {n:45,ciudad:'Guayaquil',owner:'Angel Javier Parra Bagua',cargo:'Director Técnico de Tecnologías de la Información',email:'aparrab@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:46,ciudad:'Guayaquil',owner:'Ercilia María Franco Cedeño',cargo:'Directora Técnica de Planeación, Evaluación y Acreditación',email:'efranco@ups.edu.ec',steward:'Sheyla García Calle',cargo_s:'Asistente Dirección Técnica PEA Sede Guayaquil',email_s:'sgarcia@ups.edu.ec',estado:'Completo'},
+  {n:47,ciudad:'Guayaquil',owner:'Mónica Carolina Mármol Castillo',cargo:'Directora Técnica de Vinculación con la Sociedad',email:'mmarmol@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:48,ciudad:'Guayaquil',owner:'Ronald Ruperto Alvarez Castro',cargo:'Director Técnico de Comunicación',email:'ralvarez@ups.edu.ec',steward:'Richard Jose Cortez Alejandro',cargo_s:'Auxiliar 2',email_s:'rcortez@ups.edu.ec',estado:'Completo'},
+  {n:49,ciudad:'Guayaquil',owner:'Nexi Beatriz Rosales Mendoza',cargo:'Directora Técnica de Gestión del Talento Humano',email:'nrosales@ups.edu.ec',steward:'Maria Elisa Espinal Muñoz',cargo_s:'Asistente de Gestión de Talento Humano',email_s:'mespinal@ups.edu.ec',estado:'Completo'},
+  {n:50,ciudad:'Quito',owner:'Fanny Edelina Suarez Cobos',cargo:'Directora Técnica de Admisiones',email:'fsuarezc@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:51,ciudad:'Quito',owner:'Evelyn Karen Novillo Baldeón',cargo:'Directora Técnica de Presupuesto y Finanzas',email:'enovillo@ups.edu.ec',steward:'Ing Diego Tito',cargo_s:'Asistente Dirección Técnica de Finanzas y Presupuesto',email_s:'dtito@ups.edu.ec',estado:'Completo'},
+  {n:52,ciudad:'Quito',owner:'Julissa Maribel Freire Sánchez',cargo:'Directora Técnica de Tecnologías de la Información',email:'jfreires@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:53,ciudad:'Quito',owner:'Nancy Susana Bastidas Arroyo',cargo:'Directora Técnica de Vinculación con la Sociedad',email:'nbastidas@ups.edu.ec',steward:'Alexandra Verónica Tufiño Zapata',cargo_s:'Asistente Dirección Técnica de Vinculación',email_s:'atufino@ups.edu.ec',estado:'Completo'},
+  {n:54,ciudad:'Quito',owner:'Cristian Fernando Ron Novillo',cargo:'Director Técnico de Emprendimiento e Innovación',email:'cron@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:55,ciudad:'Quito',owner:'Jaime Ramiro Morejón Vallejo',cargo:'Director Técnico de Comunicación',email:'jmorejonv@ups.edu.ec',steward:'Fátima Jesenia López Sojos',cargo_s:'Asistente',email_s:'Scisnerosf@ups.edu.ec',estado:'Completo'},
+  {n:56,ciudad:'Quito',owner:'Guillermo Marcelo Pillajo Salcedo',cargo:'Director Técnico de Gestión del Talento Humano',email:'gpillajo@ups.edu.ec',steward:'Dario Aimara Chiquin',cargo_s:'Asistente de Gestión de Talento Humano',email_s:'daimara@ups.edu.ec',estado:'Pendiente'},
+  {n:57,ciudad:'Quito',owner:'Edwin Marcelo Coronel Alvarez',cargo:'Director Técnico de Pastoral',email:'ecoronela@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Pendiente'},
+  {n:58,ciudad:'Quito',owner:'Mario Vinicio Olivo Ortiz',cargo:'Director Técnico de Planeación, Evaluación y Acreditación',email:'molivo@ups.edu.ec',steward:'Elena Margarita Pérez Pérez',cargo_s:'Asistente Dirección Técnica PEA Sede Quito',email_s:'eperez@ups.edu.ec',estado:'Completo'},
+  {n:59,ciudad:'Quito',owner:'Grecia Elizabeth Eivar Uribe',cargo:'Directora Técnica de Archivo y Documentación',email:'geivar@ups.edu.ec',steward:'Byron Rolando Atahualpa Anchaliquin',cargo_s:'Auxiliar 1 de Gestión Documental Sede Quito',email_s:'batahualpa@ups.edu.ec',estado:'Completo'},
+  {n:60,ciudad:'Guayaquil',owner:'Blanca Esperanza Condo Moyón',cargo:'Coordinadora de Consultorio Jurídico',email:'bcondo@ups.edu.ec',steward:'—',cargo_s:'',email_s:'',estado:'Completo'},
+  {n:61,ciudad:'Quito',owner:'Andrea Victoria Llumipanta Silva',cargo:'Coordinadora de Consultorio Jurídico',email:'allumipanta@ups.edu.ec',steward:'Maria Fernanda Velasco Pucuji',cargo_s:'Asistente Administrativa del Consultorio Jurídico',email_s:'mvelascop@ups.edu.ec',estado:'Completo'},
+  {n:62,ciudad:'Cuenca',owner:'María del Pilar Chimbo Guamán',cargo:'Contadora de Sede',email:'mchimbo@ups.edu.ec',steward:'Tania Jhoana Peralta Asmal',cargo_s:'Auxiliar 1 de Contabilidad',email_s:'tperalta@ups.edu.ec',estado:'Completo'},
+  {n:63,ciudad:'Guayaquil',owner:'Stefania López Ulloa',cargo:'Contadora de Sede',email:'slopezu@ups.edu.ec',steward:'Oswaldo Gregorio Leon Montoya',cargo_s:'Auxiliar 1 de contabilidad',email_s:'oleon@ups.edu.ec',estado:'Completo'},
+  {n:64,ciudad:'Quito',owner:'María Belén Sánchez Elizalde',cargo:'Contadora de Sede',email:'msanchez@ups.edu.ec',steward:'Mayra Tatiana Guerrero Garrido',cargo_s:'Auxiliar 2 de Contabilidad',email_s:'mguerrerog@ups.edu.ec',estado:'Completo'},
+  {n:65,ciudad:'Cuenca',owner:'Maria Jose Llanos Campoverde',cargo:'Dirección Técnica de Comunicación y Cultura',email:'mllanos@ups.edu.ec',steward:'Daniela Elizabeth Vicuña Mendez',cargo_s:'Asistente de la Dirección Técnica de Comunicación',email_s:'dvicuna@ups.edu.ec',estado:'Completo'},
+  {n:66,ciudad:'Cuenca',owner:'Ana Maria Reino Molina',cargo:'Secretaria General',email:'areino@ups.edu.ec',steward:'Andrea Fernanda Solórzano Jácome',cargo_s:'Auxiliar 2 de Secretaría General',email_s:'asolorzano@ups.edu.ec',estado:'Completo'}
+];
+// ── SOA DATA ──────────────────────────────────────────────────
+var SOA=[
+  {id:'A.1.2.2',desc:'Identificar y documentar propósito',just:'Art. 6 lit.b) LOPDP + Art. 24 lit.c)',estado:'En implementación',prio:'CRÍTICA',acciones:'Completar RAT 226 procedimientos Fase 9'},
+  {id:'A.1.2.3',desc:'Identificar base legal',just:'Art. 11 LOPDP',estado:'En implementación',prio:'CRÍTICA',acciones:'Matriz de licitud por tipo de tratamiento'},
+  {id:'A.1.2.4',desc:'Determinar cuándo obtener consentimiento',just:'Art. 12 LOPDP',estado:'No implementado',prio:'ALTA',acciones:'Diseñar flujos de consentimiento por canal'},
+  {id:'A.1.2.5',desc:'Obtener y registrar consentimiento',just:'Art. 12 y 47 LOPDP',estado:'No implementado',prio:'ALTA',acciones:'Módulo gestión consentimientos en SIGA'},
+  {id:'A.1.2.6',desc:'Evaluación de impacto (DPIA/EIPD)',just:'Art. 44-45 LOPDP',estado:'Parcialmente implementado',prio:'CRÍTICA',acciones:'Metodología DPIA UPS · 5 EIPDs piloto'},
+  {id:'A.1.2.7',desc:'Contratos con encargados (DPA)',just:'Art. 10 LOPDP',estado:'Parcialmente implementado',prio:'CRÍTICA',acciones:'Clausulado modelo · Inventario encargados activos'},
+  {id:'A.1.2.8',desc:'Controlador conjunto',just:'Convenios movilidad e investigación',estado:'No implementado',prio:'MEDIA',acciones:'Identificar convenios con corresponsabilidad'},
+  {id:'A.1.2.9',desc:'Registros de tratamientos (RAT)',just:'Art. 48 LOPDP',estado:'En implementación',prio:'CRÍTICA',acciones:'RAT 2026 en desarrollo · Sistema SGDP'},
+  {id:'A.1.3.2',desc:'Obligaciones con titulares',just:'Arts. 24-33 LOPDP',estado:'En implementación',prio:'CRÍTICA',acciones:'Procedimiento ARCO · Notificación brechas'},
+  {id:'A.1.3.3',desc:'Determinar información a proporcionar',just:'Art. 24 LOPDP',estado:'En implementación',prio:'CRÍTICA',acciones:'7 templates avisos por grupo de titulares'},
+  {id:'A.1.3.4',desc:'Proporcionar información a titulares',just:'Art. 25 LOPDP',estado:'Parcialmente implementado',prio:'ALTA',acciones:'Publicar avisos web · Integrar en formularios'},
+  {id:'A.1.3.5',desc:'Modificar/retirar consentimiento',just:'Art. 12 LOPDP',estado:'No implementado',prio:'ALTA',acciones:'Portal autogestión · Botón retirar consentimiento'},
+  {id:'A.1.3.6',desc:'Oponerse al procesamiento',just:'Art. 29 LOPDP',estado:'No implementado',prio:'ALTA',acciones:'Formulario oposición en portal ARCO'},
+  {id:'A.1.3.7',desc:'Derechos ARCO+',just:'Arts. 30-32 LOPDP · 15 días hábiles',estado:'Parcialmente implementado',prio:'CRÍTICA',acciones:'Procedimiento ARCO V2 · Formularios estandarizados'},
+  {id:'A.1.3.8',desc:'Informar cambios a terceros',just:'Art. 31-32 LOPDP',estado:'No implementado',prio:'MEDIA',acciones:'Módulo destinatarios en RAT'},
+  {id:'A.1.3.9',desc:'Proporcionar copia de datos (portabilidad)',just:'Art. 33 LOPDP',estado:'No implementado',prio:'ALTA',acciones:'Formatos CSV/JSON · Funcionalidad SIGA'},
+  {id:'A.1.3.10',desc:'Manejo de solicitudes ARCO+',just:'Art. 30-33 LOPDP',estado:'En implementación',prio:'CRÍTICA',acciones:'Procedimiento completo · Plazos 15 días'},
+  {id:'A.1.4.2',desc:'Limitar recopilación',just:'Art. 6 lit.c) LOPDP',estado:'Parcialmente implementado',prio:'ALTA',acciones:'Auditoría formularios admisión/matrícula'},
+  {id:'A.1.4.3',desc:'Limitar el procesamiento',just:'Art. 6 lit.b) LOPDP',estado:'Parcialmente implementado',prio:'ALTA',acciones:'Matriz de acceso por rol · Revisión trimestral'},
+  {id:'A.1.4.8',desc:'Retención y conservación',just:'Art. 6 lit.e) LOPDP',estado:'En implementación',prio:'CRÍTICA',acciones:'Política retención 2026 · Matriz plazos legal'},
+  {id:'A.1.4.10',desc:'Controles de transmisión',just:'Art. 48 LOPDP + ISO 27001 A.8.24',estado:'Parcialmente implementado',prio:'CRÍTICA',acciones:'Migración HTTPS · Política cifrado TLS 1.3'},
+  {id:'A.1.5.2',desc:'Base para transferencias internacionales',just:'Art. 11 y 34 LOPDP',estado:'En implementación',prio:'CRÍTICA',acciones:'Inventario transferencias · Análisis base legal'},
+  {id:'A.1.5.3',desc:'Países y organizaciones destino',just:'Art. 34-37 LOPDP',estado:'En implementación',prio:'CRÍTICA',acciones:'Inventario cloud extranjero · Cláusulas estándar'},
+  {id:'A.1.5.4',desc:'Registros de transferencias',just:'Art. 48 LOPDP',estado:'No implementado',prio:'ALTA',acciones:'Módulo registro transferencias en sistema'},
+  {id:'B.1.2.6',desc:'DPIA como control de seguridad continuo',just:'Art. 42 LOPDP + Guía SPDP V2 #30',estado:'En implementación',prio:'CRÍTICA',acciones:'EIPD recurrente semestral · Documentar en SGDP',nuevo:true},
+  {id:'B.1.2.7',desc:'Criptografía obligatoria Art. 37 LOPDP',just:'Art. 37 LOPDP + Guía SPDP V2 #31',estado:'No implementado',prio:'CRÍTICA',acciones:'Inventariar cifrado SIGA, ATENEA, servidores',nuevo:true},
+  {id:'ISO/IEC 42001',desc:'Gestión de riesgos para sistemas de IA',just:'Art. 20 LOPDP + Guía V2 #12',estado:'No implementado',prio:'ALTA',acciones:'Política uso ético IA · DPIA para ATENEA',nuevo:true}
+];
+
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+var RAT_S=[], RISK_S=[];
+var rPage=1, oPg=1, soaPg=1, pPg=1, PS=10;
+var MACROS=[...new Set(PROCS.map(p=>p.mac))].sort();
+
+// ════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════
+(function(){
+  // Populate macros selects
+  ['rpm','pm'].forEach(function(id){
+    var s=document.getElementById(id);
+    MACROS.forEach(function(m){
+      var o=document.createElement('option'); o.value=m; o.textContent=m; s.appendChild(o);
+    });
+  });
+  drawDashCov();
+  rpdraw();
+  calcR();
+  drawHeat();
+  drawSOA();
+  drawO();
+  drawP();
+})();
+
+// ════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════
+function nav(pg){
+  document.querySelectorAll('.page').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.sb-item').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('page-'+pg).classList.add('active');
+  var items=document.querySelectorAll('.sb-item');
+  items.forEach(function(el){
+    if(el.getAttribute('onclick') && el.getAttribute('onclick').includes("'"+pg+"'")) el.classList.add('active');
+  });
+  updMetrics();
+}
+
+function updMetrics(){
+  document.getElementById('dm-rat').textContent=RAT_S.length;
+  document.getElementById('dm-eipd-cnt').textContent=RISK_S.length;
+  document.getElementById('dm-crit').textContent=RISK_S.filter(function(r){return r.clasif==='CRÍTICO';}).length+2;
+  document.getElementById('sb-rat').textContent=RAT_S.length;
+  document.getElementById('sb-eipd').textContent=RISK_S.length+12;
+}
+
+// ════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════════
+function drawDashCov(){
+  var macCounts={};
+  PROCS.forEach(function(p){macCounts[p.mac]=(macCounts[p.mac]||0)+1;});
+  var sorted=Object.entries(macCounts).sort(function(a,b){return b[1]-a[1];});
+  var h='';
+  sorted.forEach(function(e){
+    var mac=e[0], total=e[1];
+    var done=RAT_S.filter(function(r){return r.mac===mac;}).length;
+    var pct=Math.round((done/total)*100);
+    var col=pct>=100?'var(--ct)':pct>0?'var(--ca)':'var(--border)';
+    h+='<div class="cov-item">'
+      +'<div class="cov-name">'+mac+'</div>'
+      +'<div class="pbar"><div class="pbar-fill" style="width:'+Math.max(pct,1)+'%;background:'+col+';"></div></div>'
+      +'<div class="cov-stats"><span>'+pct+'% RAT</span><span>'+done+'/'+total+'</span></div>'
+      +'</div>';
+  });
+  document.getElementById('dash-cov').innerHTML=h;
+}
+
+// ════════════════════════════════════════════════════════════
+//  RAT
+// ════════════════════════════════════════════════════════════
+var rMode='proc';
+function setRM(m){
+  rMode=m;
+  document.getElementById('rm-proc').className='btn btn-sm'+(m==='proc'?' btn-primary':'');
+  document.getElementById('rm-libre').className='btn btn-sm'+(m==='libre'?' btn-primary':'');
+  if(m==='libre'){
+    document.getElementById('rat-picker').style.display='none';
+    document.getElementById('rat-form').style.display='';
+    var al=document.getElementById('rat-al');
+    al.style.display=''; al.className='alert al-a';
+    al.textContent='Actividad libre — completa todos los campos manualmente';
+    ['rf-cod','rf-nom','rf-mac','rf-own'].forEach(function(id){document.getElementById(id).value='';});
+    buildStepper(2);
+  }
+}
+
+function rpfilt(){
+  var q=document.getElementById('rps').value.toLowerCase();
+  var fm=document.getElementById('rpm').value;
+  return PROCS.filter(function(p){
+    return(!q||p.nom.toLowerCase().includes(q)||p.cod.toLowerCase().includes(q))&&(!fm||p.mac===fm);
+  });
+}
+function rpdraw(){rPage=1;_rpdraw();}
+function _rpdraw(){
+  var rows=rpfilt(), tot=rows.length, pgs=Math.ceil(tot/PS)||1;
+  var sl=rows.slice((rPage-1)*PS, rPage*PS);
+  var h='';
+  sl.forEach(function(p){
+    var catBd=p.cat==='Estratégicos'?'bd-p':p.cat==='Clave - Misional'?'bd-t':p.cat==='Servicio Comunitario'?'bd-a':'bd-g';
+    h+='<tr class="row-click">'
+      +'<td><span style="font-weight:500;">'+p.nom+'</span><br><span class="badge '+catBd+'">'+p.cat+'</span></td>'
+      +'<td class="mono" style="font-size:11px;color:var(--text2);">'+p.cod+'</td>'
+      +'<td style="font-size:12px;color:var(--text2);">'+p.own+'</td>'
+      +'<td><button class="btn btn-primary btn-sm" onclick="selectProc(\''+p.cod+'\')">Iniciar RAT</button></td>'
+      +'</tr>';
+  });
+  if(!sl.length) h='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3);">Sin resultados</td></tr>';
+  document.getElementById('rp-tb').innerHTML=h;
+  document.getElementById('rppi').textContent='Pág.'+rPage+'/'+pgs+' ('+tot+')';
+}
+function rppg(d){var rows=rpfilt(),pgs=Math.ceil(rows.length/PS)||1;rPage=Math.max(1,Math.min(pgs,rPage+d));_rpdraw();}
+document.getElementById('rps').addEventListener('input',rpdraw);
+document.getElementById('rpm').addEventListener('change',rpdraw);
+
+function selectProc(cod){
+  var p=PROCS.find(function(x){return x.cod===cod;});
+  if(!p) return;
+  document.getElementById('rat-picker').style.display='none';
+  document.getElementById('rat-form').style.display='';
+  document.getElementById('rf-cod').value=p.cod;
+  document.getElementById('rf-nom').value=p.nom;
+  document.getElementById('rf-mac').value=p.mac;
+  document.getElementById('rf-own').value=p.own;
+  var al=document.getElementById('rat-al');
+  al.style.display=''; al.className='alert al-t';
+  al.textContent='Datos precargados: '+p.cod+' — '+p.nom;
+  buildStepper(2);
+}
+
+function buildStepper(active){
+  var steps=['Seleccionar','Identificación','Datos y base','Guardar'];
+  var h='';
+  steps.forEach(function(l,i){
+    var n=i+1;
+    if(i>0) h+='<div class="step-sep"></div>';
+    var cls=n<active?'step-done':n===active?'step-active':'step-todo';
+    h+='<div style="display:flex;align-items:center;gap:5px;">'
+      +'<div class="step-dot '+cls+'">'+(n<active?'✓':n)+'</div>'
+      +'<span class="step-label'+(n===active?' active':'')+'">'+l+'</span></div>';
+  });
+  document.getElementById('rat-stepper').innerHTML=h;
+}
+
+function chkSens(){
+  document.getElementById('rat-al-sens').style.display=document.getElementById('rf-sens').value==='si'?'':'none';
+}
+function chkBase(){
+  document.getElementById('rat-al-il').style.display=document.getElementById('rf-base').value==='Interés legítimo'?'':'none';
+}
+
+function saveRAT(){
+  var cod=document.getElementById('rf-cod').value;
+  var nom=document.getElementById('rf-nom').value||'Actividad libre';
+  var mac=document.getElementById('rf-mac').value;
+  if(!cod){alert('Ingresa el código del procedimiento');return;}
+  if(RAT_S.find(function(r){return r.cod===cod;})){
+    alert('Este procedimiento ya fue registrado en el RAT.');return;
+  }
+  RAT_S.push({cod:cod,nom:nom,mac:mac,fecha:new Date().toLocaleDateString('es-EC')});
+  updMetrics(); drawDashCov();
+  buildStepper(4);
+  setTimeout(function(){alert('RAT guardado correctamente: '+nom);resetRAT();},300);
+}
+
+function resetRAT(){
+  document.getElementById('rat-picker').style.display='';
+  document.getElementById('rat-form').style.display='none';
+  document.getElementById('rat-al').style.display='none';
+  document.getElementById('rat-al-sens').style.display='none';
+  document.getElementById('rat-al-il').style.display='none';
+}
+function launchEIPD(){
+  var nom=document.getElementById('rf-nom').value||'este tratamiento';
+  nav('eipd'); setET(0);
+  setTimeout(function(){document.getElementById('er-activo').value=nom;},100);
+}
+
+// ════════════════════════════════════════════════════════════
+//  EIPD / RIESGOS
+// ════════════════════════════════════════════════════════════
+function setET(n){
+  [0,1,2].forEach(function(i){
+    document.getElementById('ev'+i).style.display=i===n?'':'none';
+    document.getElementById('et'+i).className='tab'+(i===n?' active':'');
+  });
+  if(n===1) drawRisks();
+  if(n===2) drawHeat();
+}
+
+function updS(id,oid){document.getElementById(oid).textContent=document.getElementById(id).value;}
+
+function rlvl(s){
+  if(s>=20) return{lbl:'CRÍTICO',bg:'#E24B4A',lt:'var(--crl)',d:'Tratamiento INMEDIATO · Umbral V2: USD 12.000'};
+  if(s>=15) return{lbl:'ALTO',bg:'var(--ca)',lt:'var(--cal)',d:'Tratamiento prioritario en 30 días'};
+  if(s>=10) return{lbl:'MEDIO',bg:'#639922',lt:'#EAF3DE',d:'Plan de tratamiento en 90 días'};
+  if(s>=5)  return{lbl:'BAJO',bg:'var(--cb)',lt:'var(--cbl)',d:'Aceptable · Seguimiento semestral'};
+  return {lbl:'MUY BAJO',bg:'var(--ct)',lt:'var(--ctl)',d:'Aceptable · Monitoreo anual'};
+}
+
+function calcR(){
+  var oi=+document.getElementById('eo-i').value, op=+document.getElementById('eo-p').value;
+  var ti=+document.getElementById('et-i').value, tp=+document.getElementById('et-p').value;
+  var vf=+document.getElementById('er-vf').value;
+  var os=oi*op, ts=Math.round(tp*(ti*vf)), ms=Math.max(os,ts);
+  var or_=rlvl(os), tr_=rlvl(ts), mr=rlvl(ms);
+  document.getElementById('eo-sc').textContent=os;
+  document.getElementById('eo-nl').textContent=or_.lbl;
+  document.getElementById('eo-box').style.background=or_.lt;
+  document.getElementById('eo-box').style.color=or_.bg;
+  document.getElementById('et-sc').textContent=ts;
+  document.getElementById('et-nl').textContent=tr_.lbl;
+  document.getElementById('et-box').style.background=tr_.lt;
+  document.getElementById('et-box').style.color=tr_.bg;
+  document.getElementById('res-sc').textContent=ms;
+  document.getElementById('res-sc').style.color=mr.bg;
+  document.getElementById('res-nl').textContent=mr.lbl;
+  document.getElementById('res-nl').style.color=mr.bg;
+  document.getElementById('res-desc').textContent=mr.d+(vf>1?' · Factor V='+vf+' aplicado':'');
+  document.getElementById('res-box').style.background=mr.lt;
+}
+
+function saveRisk(){
+  var activo=document.getElementById('er-activo').value||'Sin nombre';
+  var vuln=document.getElementById('er-vuln').value;
+  var amenaza=document.getElementById('er-amenaza').value;
+  var oi=+document.getElementById('eo-i').value, op=+document.getElementById('eo-p').value;
+  var ti=+document.getElementById('et-i').value, tp=+document.getElementById('et-p').value;
+  var vf=+document.getElementById('er-vf').value;
+  var os=oi*op, ts=Math.round(tp*(ti*vf)), ms=Math.max(os,ts);
+  var mr=rlvl(ms);
+  var id='RISK-'+String(RISK_S.length+1).padStart(3,'0');
+  RISK_S.push({id:id,activo:activo,vuln:vuln,amenaza:amenaza,os:os,ts:ts,ms:ms,clasif:mr.lbl,bg:mr.bg,lt:mr.lt,fecha:new Date().toLocaleDateString('es-EC')});
+  updMetrics(); setET(1);
+}
+
+function drawRisks(){
+  var el=document.getElementById('risks-list');
+  var em=document.getElementById('ev1-empty');
+  if(!RISK_S.length){el.innerHTML='';em.style.display='';return;}
+  em.style.display='none';
+  var h='';
+  RISK_S.forEach(function(r){
+    h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:'+r.bg+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">'+r.ms+'</div>'
+      +'<div style="flex:1;">'
+      +'<div style="font-size:13px;font-weight:500;margin-bottom:2px;">'+r.activo+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);">'+r.id+' · Org: '+r.os+' · Titular: '+r.ts+' · '+r.fecha+'</div>'
+      +'</div>'
+      +'<span class="badge" style="background:'+r.lt+';color:'+r.bg+';">'+r.clasif+'</span>'
+      +'</div>';
+  });
+  el.innerHTML=h;
+}
+
+function heatColor(s){
+  if(s>=20) return'#E24B4A'; if(s>=15) return'#BA7517';
+  if(s>=10) return'#639922'; if(s>=5)  return'#185FA5'; return'#0F6E56';
+}
+function drawHeat(){
+  var imp=['Catastr.(5)','Mayor(4)','Mod.(3)','Menor(2)','Insig.(1)'];
+  var h='<div class="hcell head"></div>';
+  ['Muy Baja','Baja','Media','Alta','Muy Alta'].forEach(function(lb){
+    h+='<div class="hcell head">'+lb+'</div>';
+  });
+  imp.forEach(function(il,ri){
+    var iv=5-ri;
+    h+='<div class="hcell head">'+il+'</div>';
+    for(var pv=1;pv<=5;pv++){
+      var sc=pv*iv;
+      h+='<div class="hcell" style="background:'+heatColor(sc)+';font-size:13px;">'+sc+'</div>';
+    }
+  });
+  document.getElementById('heatmap').innerHTML=h;
+}
+
+// ════════════════════════════════════════════════════════════
+//  SOA
+// ════════════════════════════════════════════════════════════
+function soaFilt(){
+  var q=document.getElementById('soa-s').value.toLowerCase();
+  var fe=document.getElementById('soa-e').value;
+  var fp=document.getElementById('soa-p').value;
+  return SOA.filter(function(c){
+    return(!q||c.id.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q))&&(!fe||c.estado===fe)&&(!fp||c.prio===fp);
+  });
+}
+function drawSOA(){soaPg=1;_drawSOA();}
+function _drawSOA(){
+  var rows=soaFilt(), tot=rows.length, pgs=Math.ceil(tot/PS)||1;
+  var sl=rows.slice((soaPg-1)*PS, soaPg*PS);
+  function ec(e){
+    var m={'Implementado':['var(--ct)','var(--ctl)'],'Parcialmente implementado':['var(--ca)','var(--cal)'],'En implementación':['var(--cb)','var(--cbl)'],'No implementado':['var(--cr)','var(--crl)']};
+    return m[e]||['var(--cgd)','var(--cg)'];
+  }
+  function pc(p){
+    return p==='CRÍTICA'?['#E24B4A','var(--crl)']:p==='ALTA'?['var(--ca)','var(--cal)']:p==='MEDIA'?['var(--cb)','var(--cbl)']:['var(--cgd)','var(--cg)'];
+  }
+  var h='';
+  sl.forEach(function(c){
+    var e=ec(c.estado), pr=pc(c.prio);
+    h+='<div class="ctrl-card">'
+      +'<span class="ctrl-id'+(c.nuevo?' new':'')+'">'+c.id+'</span>'
+      +(c.nuevo?'<span class="badge bd-a" style="margin-left:6px;">Nuevo V2</span>':'')
+      +'<div class="ctrl-desc">'+c.desc+'</div>'
+      +'<div class="ctrl-just">'+c.just+'</div>'
+      +'<div class="ctrl-footer">'
+      +'<span class="badge" style="background:'+e[1]+';color:'+e[0]+';">'+c.estado+'</span>'
+      +'<span class="badge" style="background:'+pr[1]+';color:'+pr[0]+';">'+c.prio+'</span>'
+      +'<span style="font-size:11px;color:var(--text3);margin-left:auto;">'+c.acciones.substring(0,60)+(c.acciones.length>60?'…':'')+'</span>'
+      +'</div></div>';
+  });
+  if(!sl.length) h='<div class="alert al-b">Sin resultados</div>';
+  document.getElementById('soa-list').innerHTML=h;
+  document.getElementById('soa-pi').textContent='Pág.'+soaPg+'/'+pgs+' ('+tot+' controles)';
+}
+function soaPg(d){var rows=soaFilt(),pgs=Math.ceil(rows.length/PS)||1;soaPg=Math.max(1,Math.min(pgs,soaPg+d));_drawSOA();}
+
+// ════════════════════════════════════════════════════════════
+//  DATA OWNERS
+// ════════════════════════════════════════════════════════════
+function ofilt(){
+  var q=document.getElementById('os').value.toLowerCase();
+  var fs=document.getElementById('osed').value;
+  var fe=document.getElementById('oest').value;
+  return OWNERS.filter(function(d){
+    return(!q||d.owner.toLowerCase().includes(q)||d.cargo.toLowerCase().includes(q)||d.email.toLowerCase().includes(q))
+      &&(!fs||d.ciudad===fs)&&(!fe||d.estado===fe);
+  });
+}
+function drawO(){oPg=1;_drawO();}
+function _drawO(){
+  var rows=ofilt(), tot=rows.length, pgs=Math.ceil(rows.length/PS)||1;
+  var sl=rows.slice((oPg-1)*PS, oPg*PS);
+  var h='';
+  if(!sl.length) h='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">Sin resultados</td></tr>';
+  else sl.forEach(function(d){
+    var ab=d.ciudad==='Cuenca'?'bd-p':d.ciudad==='Quito'?'bd-t':'bd-a';
+    var av=d.owner.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('');
+    var avbg=d.ciudad==='Cuenca'?'var(--cpl)':d.ciudad==='Quito'?'var(--ctl)':'var(--cal)';
+    var avtc=d.ciudad==='Cuenca'?'var(--cpd)':d.ciudad==='Quito'?'var(--ctd)':'var(--ca)';
+    var stHtml=d.steward==='—'
+      ? '<span style="color:var(--text3);font-style:italic;">Sin designar</span>'
+      : '<span style="font-size:12px;">'+d.steward+'</span>'
+        +(d.cargo_s?'<br><span style="font-size:10px;color:var(--text3);">'+d.cargo_s+'</span>':'');
+    h+='<tr>'
+      +'<td style="text-align:center;color:var(--text3);font-size:11px;">'+d.n+'</td>'
+      +'<td>'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<div style="width:28px;height:28px;border-radius:50%;background:'+avbg+';color:'+avtc+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">'+av+'</div>'
+      +'<div><div style="font-weight:500;font-size:12px;">'+d.owner+'</div>'
+      +'<div style="font-size:10px;color:var(--text3);">'+d.cargo+'</div></div></div></td>'
+      +'<td><span class="badge '+ab+'">'+d.ciudad+'</span></td>'
+      +'<td>'+stHtml+(d.steward==='—'
+        ?'<br><button class="btn btn-sm" style="margin-top:4px;font-size:10px;" onclick="genOficio(\''+d.owner+'\',\''+d.cargo+'\')">Generar oficio</button>':'')
+      +'</td>'
+      +'<td><a href="mailto:'+d.email+'" style="font-size:11px;color:var(--cb);text-decoration:none;">'+d.email+'</a></td>'
+      +'<td><span class="badge '+(d.estado==='Completo'?'bd-t':'bd-r')+'">'+d.estado+'</span></td>'
+      +'<td>'+(d.email_s?'<a href="mailto:'+d.email_s+'" style="font-size:10px;color:var(--text3);text-decoration:none;">'+d.email_s+'</a>':'')+'</td>'
+      +'</tr>';
+  });
+  document.getElementById('o-tb').innerHTML=h;
+  document.getElementById('opi').textContent='Pág.'+oPg+'/'+pgs+' ('+tot+')';
+}
+function opg(d){var rows=ofilt(),pgs=Math.ceil(rows.length/PS)||1;oPg=Math.max(1,Math.min(pgs,oPg+d));_drawO();}
+
+function genOficio(owner,cargo){
+  alert('Función: Generar oficio de designación de Steward para\n'+owner+'\n'+cargo+'\n\nIntegrar con backend o Claude Code para generar el documento Word (PDP-DOC).');
+}
+
+// ════════════════════════════════════════════════════════════
+//  PROCEDIMIENTOS
+// ════════════════════════════════════════════════════════════
+function pfilt(){
+  var q=document.getElementById('ps').value.toLowerCase();
+  var fm=document.getElementById('pm').value;
+  var fc=document.getElementById('pc').value;
+  return PROCS.filter(function(p){
+    return(!q||p.nom.toLowerCase().includes(q)||p.cod.toLowerCase().includes(q)||p.own.toLowerCase().includes(q))
+      &&(!fm||p.mac===fm)&&(!fc||p.cat===fc);
+  });
+}
+function drawP(){pPg=1;_drawP();}
+function _drawP(){
+  var rows=pfilt(), tot=rows.length, pgs=Math.ceil(tot/PS)||1;
+  var sl=rows.slice((pPg-1)*PS, pPg*PS);
+  var h='';
+  if(!sl.length) h='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3);">Sin resultados</td></tr>';
+  else sl.forEach(function(p){
+    var catBd=p.cat==='Estratégicos'?'bd-p':p.cat==='Clave - Misional'?'bd-t':p.cat==='Servicio Comunitario'?'bd-a':'bd-g';
+    var ratDone=RAT_S.find(function(r){return r.cod===p.cod;});
+    h+='<tr class="row-click">'
+      +'<td style="font-weight:500;font-size:12px;">'+p.nom+'</td>'
+      +'<td class="mono" style="font-size:11px;color:var(--text2);">'+p.cod+'</td>'
+      +'<td style="font-size:11px;">'+p.own+'</td>'
+      +'<td><span class="badge '+catBd+'">'+p.cat+'</span></td>'
+      +'<td>'
+      +(ratDone
+        ? '<span class="badge bd-t">✓ RAT</span>'
+        : '<button class="btn btn-primary btn-sm" onclick="selectAndRAT(\''+p.cod+'\')">Registrar RAT</button>')
+      +'</td>'
+      +'</tr>';
+  });
+  document.getElementById('p-tb').innerHTML=h;
+  document.getElementById('ppi').textContent='Pág.'+pPg+'/'+pgs+' ('+tot+')';
+}
+function ppg(d){var rows=pfilt(),pgs=Math.ceil(rows.length/PS)||1;pPg=Math.max(1,Math.min(pgs,pPg+d));_drawP();}
+
+function selectAndRAT(cod){
+  nav('rat');
+  setTimeout(function(){selectProc(cod);},100);
+}
+
+</script>
+</body>
+</html>
